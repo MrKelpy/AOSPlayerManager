@@ -1,0 +1,10 @@
+name: AOSPlayerManager
+version: 1.0
+description: Tailor-Made plugin for the Age of Sauron Server, to manage player inventories and positions across worlds
+author: MrKelpy
+main: com.mrkelpy.aosplayermanager.AOSPlayerManager
+
+commands:
+  levellist:
+    description: Displays a list of all the levels and level sets in the server.
+    usage: /levellist

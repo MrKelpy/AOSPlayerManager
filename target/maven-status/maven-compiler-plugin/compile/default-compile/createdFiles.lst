@@ -1,0 +1,7 @@
+com\mrkelpy\aosplayermanager\AOSPlayerManager.class
+com\mrkelpy\aosplayermanager\common\LevelSetConfiguration.class
+com\mrkelpy\aosplayermanager\listeners\onWorldChanged.class
+com\mrkelpy\aosplayermanager\listeners\AOSPlayerManagerCommands.class
+com\mrkelpy\aosplayermanager\common\PlayerDataHolder.class
+com\mrkelpy\aosplayermanager\util\FileUtils.class
+com\mrkelpy\aosplayermanager\util\PlayerSerializationUtils.class
