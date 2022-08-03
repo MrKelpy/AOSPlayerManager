@@ -3,11 +3,11 @@ package com.mrkelpy.aosplayermanager.common;
 import com.google.gson.*;
 import com.mrkelpy.aosplayermanager.util.FileUtils;
 import com.mrkelpy.aosplayermanager.util.SerializationUtils;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.potion.PotionEffect;
 
@@ -24,7 +24,8 @@ import java.util.stream.Collectors;
 @SuppressWarnings("unused")
 public class PlayerDataHolder implements Serializable {
 
-    private PlayerInventory playerInventory;
+    private ItemStack[] playerInventory;
+    private ItemStack[] playerArmour;
     private ArrayList<SimplePotionEffect> playerPotionEffects;
     private PartialLocation playerCoordinates;
     private int playerExperienceLevels;
@@ -41,7 +42,8 @@ public class PlayerDataHolder implements Serializable {
      */
     public PlayerDataHolder(PlayerInventory playerInventory, PartialLocation location, Collection<PotionEffect> potionEffects, int experienceLevels,
                             float experiencePoints, double health, int hunger) {
-        this.playerInventory = playerInventory;
+        this.playerInventory = playerInventory.getContents();
+        this.playerArmour = playerInventory.getArmorContents();
         this.playerPotionEffects = potionEffects.stream().map(SimplePotionEffect::new).collect(Collectors.toCollection(ArrayList::new));
         this.playerCoordinates = location;
         this.playerExperienceLevels = experienceLevels;
@@ -62,7 +64,8 @@ public class PlayerDataHolder implements Serializable {
      */
     public PlayerDataHolder(Player player, PartialLocation location) {
         player.saveData();
-        this.playerInventory = player.getInventory();
+        this.playerInventory = player.getInventory().getContents();
+        this.playerArmour = player.getInventory().getArmorContents();
         this.playerPotionEffects = player.getActivePotionEffects().stream().map(SimplePotionEffect::new).collect(Collectors.toCollection(ArrayList::new));
         this.playerCoordinates = location;
         this.playerExperienceLevels = player.getLevel();
@@ -99,7 +102,10 @@ public class PlayerDataHolder implements Serializable {
         HashMap<String, Object> serializedPlayerdata = new HashMap<>();
 
         serializedPlayerdata.put("inventory",
-                SerializationUtils.inventoryToBase64(this.playerInventory));
+                SerializationUtils.itemStackArrayToBase64(this.playerInventory));
+
+        serializedPlayerdata.put("armour",
+                SerializationUtils.itemStackArrayToBase64(this.playerArmour));
 
         serializedPlayerdata.put("potionEffects", this.playerPotionEffects.size() > 0
                 ? this.playerPotionEffects.stream().map(SimplePotionEffect::serialize).collect(Collectors.toList()) : null);
@@ -122,10 +128,13 @@ public class PlayerDataHolder implements Serializable {
     @SuppressWarnings("unchecked")
     public void deserialize(JsonObject serializedPlayerData) {
 
+         this.playerInventory = serializedPlayerData.get("inventory") != null
+                ? SerializationUtils.itemStackArrayFromBase64(FileUtils.GSON.fromJson(serializedPlayerData.get("inventory").toString(), String.class))
+                : new ItemStack[InventoryType.PLAYER.getDefaultSize()];
 
-        this.playerInventory = serializedPlayerData.get("inventory") != null
-                ? SerializationUtils.inventoryFromBase64(FileUtils.GSON.fromJson(serializedPlayerData.get("inventory").toString(), String.class))
-                : (PlayerInventory) Bukkit.createInventory(null, InventoryType.PLAYER);
+         this.playerArmour = serializedPlayerData.get("inventory") != null ?
+                SerializationUtils.itemStackArrayFromBase64(FileUtils.GSON.fromJson(serializedPlayerData.get("armour").toString(), String.class))
+                : new ItemStack[4];
 
         // Returns a list of the potion effects, if present, without the effects being cast to SimplePotionEffect
         ArrayList<Object> uncastedPotionEffectList = serializedPlayerData.get("potionEffects") != null ?
@@ -165,7 +174,8 @@ public class PlayerDataHolder implements Serializable {
      * Applies the Playerdata held in the PlayerDataHolder to a given player.
      */
     public void applyTo(Player player, World level) {
-        player.getInventory().setContents(this.playerInventory.getContents());
+        player.getInventory().setContents(this.playerInventory);
+        player.getInventory().setArmorContents(this.playerArmour);
         player.setLevel(this.playerExperienceLevels);
         player.setExp(this.playerExperiencePoints);
         player.setHealth(this.playerHealth);

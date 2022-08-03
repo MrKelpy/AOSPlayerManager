@@ -33,12 +33,6 @@ public class onWorldChangedEvents implements Listener {
 
         EventUtils.eventPlayerdataSave(player, player.getWorld().getName());
         player.eject();  // Ejects the player from a vehicle if they're in one
-
-        for (ItemStack item : player.getInventory().getArmorContents()) {
-
-            if (item.getType() == Material.AIR) continue;
-            player.getWorld().dropItem(player.getLocation(), item).setPickupDelay(3);
-        }
     }
 
     /**
@@ -59,7 +53,6 @@ public class onWorldChangedEvents implements Listener {
     public void onWorldChangedPost(PlayerChangedWorldEvent event) {
 
         Player player = event.getPlayer();
-        player.getInventory().setArmorContents(null);
         PlayerDataHolder playerdata = FileUtils.getPlayerData(player, player.getWorld().getName());
         // Force default gamemode
         player.setGameMode(DefaultGamemodes.get(player.getWorld().getName()));

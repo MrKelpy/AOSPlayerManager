@@ -9,6 +9,7 @@ C:\dev\Java\AOSPlayerManager\src\main\java\com\mrkelpy\aosplayermanager\listener
 C:\dev\Java\AOSPlayerManager\src\main\java\com\mrkelpy\aosplayermanager\util\EventUtils.java
 C:\dev\Java\AOSPlayerManager\src\main\java\com\mrkelpy\aosplayermanager\util\FileUtils.java
 C:\dev\Java\AOSPlayerManager\src\main\java\com\mrkelpy\aosplayermanager\common\DefaultGamemodes.java
+C:\dev\Java\AOSPlayerManager\src\main\java\com\mrkelpy\aosplayermanager\util\SerializationUtils.java
 C:\dev\Java\AOSPlayerManager\src\main\java\com\mrkelpy\aosplayermanager\listeners\onWorldChangedEvents.java
 C:\dev\Java\AOSPlayerManager\src\main\java\com\mrkelpy\aosplayermanager\listeners\PlayerDataSavingEvents.java
 C:\dev\Java\AOSPlayerManager\src\main\java\com\mrkelpy\aosplayermanager\common\SimplePotionEffect.java
