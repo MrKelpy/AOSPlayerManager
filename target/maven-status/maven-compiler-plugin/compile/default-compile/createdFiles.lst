@@ -2,7 +2,6 @@ com\mrkelpy\aosplayermanager\common\SimplePotionEffect.class
 com\mrkelpy\aosplayermanager\common\PartialLocation.class
 com\mrkelpy\aosplayermanager\common\LevelSetConfiguration.class
 com\mrkelpy\aosplayermanager\listeners\onWorldChangedEvents.class
-com\mrkelpy\aosplayermanager\listeners\onItemSpawnEvents.class
 com\mrkelpy\aosplayermanager\listeners\AOSPlayerManagerCommands.class
 com\mrkelpy\aosplayermanager\common\PlayerDataHolder.class
 com\mrkelpy\aosplayermanager\common\AOSPlayerManagerConfig.class
