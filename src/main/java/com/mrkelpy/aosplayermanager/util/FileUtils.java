@@ -1,27 +1,34 @@
 package com.mrkelpy.aosplayermanager.util;
 
-import com.avaje.ebean.validation.NotNull;
+import com.google.gson.*;
 import com.mrkelpy.aosplayermanager.AOSPlayerManager;
+import com.mrkelpy.aosplayermanager.common.PartialLocation;
 import com.mrkelpy.aosplayermanager.common.PlayerDataHolder;
-import net.minecraft.util.com.google.gson.Gson;
-import net.minecraft.util.com.google.gson.JsonObject;
-import net.minecraft.util.com.google.gson.JsonParser;
-import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.PlayerInventory;
 
-import javax.annotation.Nonnull;
 import java.io.*;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
  * This class implements utilitary methods for dealing with playerdata and level files.
  */
-@SuppressWarnings({"ResultOfMethodCallIgnored", "unchecked"})
+@SuppressWarnings({"unused", "ResultOfMethodCallIgnored", "deprecation"})
 public class FileUtils {
+
+    /**
+     * This GSON instance should be used for serialization and de-serialization, since
+     * it contains the necessary settings to make the JSON-like objects function.
+     */
+    public final static Gson GSON = new GsonBuilder().setObjectToNumberStrategy(ToNumberPolicy.LAZILY_PARSED_NUMBER)
+            .excludeFieldsWithModifiers(Modifier.TRANSIENT, Modifier.STATIC)
+            .setExclusionStrategies(new PlayerExclusionStrategy())
+            .serializeNulls()
+            .create();
 
     /**
      * Creates the levels' storage directory if it doesn't exist.
@@ -59,21 +66,44 @@ public class FileUtils {
      *                 because the player's location can vary even for two worlds in a Set.
      * @return The File instance containing the data
      */
-    public static File savePlayerData(Player player, String levelName, Location location) {
+    public static File savePlayerData(Player player, String levelName, PartialLocation location) {
 
         PlayerDataHolder playerDataHolder = new PlayerDataHolder(player, location);
         File playerdataFile = new File(makeLevelDirectory(levelName), player.getUniqueId().toString() + ".json");
-        FileUtils.writeJson(playerdataFile.getPath(), new JsonObject().getAsJsonObject(new Gson().toJson(playerDataHolder.serialize())));
+        FileUtils.writeJson(playerdataFile.getPath(), FileUtils.GSON.toJsonTree(playerDataHolder.serialize()).getAsJsonObject());
         return playerdataFile;
     }
 
     /**
-     * Shortcut for the {@link FileUtils#savePlayerData(Player, String, Location)} method, setting the location as the player's location
+     * Shortcut for the {@link FileUtils#savePlayerData(Player, String, PartialLocation)} method, setting the location as the player's location
      * in that level.
      */
     public static File savePlayerData(Player player, String levelName) {
-        return savePlayerData(player, levelName, player.getLocation());
+        return savePlayerData(player, levelName, new PartialLocation(player.getLocation()));
     }
+
+    /**
+     * Acts like the {@link FileUtils#savePlayerData(Player, String, PartialLocation)}, but resets the HP and
+     * any other not kept-on-death attributes to their default values, and also nulls out their location,
+     * so minecraft handles the coordinate placement.
+     */
+    public static File savePlayerDataForDeath(Player player, String levelName, PlayerInventory inventory) {
+        PlayerDataHolder playerDataHolder = new PlayerDataHolder(inventory, null, new ArrayList<>(),
+                player.getLevel(), player.getExp(), player.getMaxHealth(), 20);
+
+        File playerdataFile = new File(makeLevelDirectory(levelName), player.getUniqueId().toString() + ".json");
+        FileUtils.writeJson(playerdataFile.getPath(), FileUtils.GSON.toJsonTree(playerDataHolder.serialize()).getAsJsonObject());
+        return playerdataFile;
+    }
+
+    /**
+     * Shortcut for the {@link FileUtils#savePlayerDataForDeath(Player, String, PlayerInventory)} method,
+     * setting inventory as the player's inventory.
+     */
+    public static File savePlayerDataForDeath(Player player, String levelName) {
+        return savePlayerDataForDeath(player, levelName, player.getInventory());
+    }
+
 
     /**
      * Accesses the playerdata file for a player in a level, and loads it into a PlayerDataHolder.
@@ -84,7 +114,7 @@ public class FileUtils {
     public static PlayerDataHolder getPlayerData(Player player, String levelName) {
 
         File playerdataFile = new File(makeLevelDirectory(levelName), player.getUniqueId().toString() + ".json");
-        Map<String, Object> playerData = FileUtils.readJson(playerdataFile.getPath());
+        HashMap<String, Object> playerData = (HashMap<String, Object>) FileUtils.readJson(playerdataFile.getPath());
         return new PlayerDataHolder(playerData);
     }
 

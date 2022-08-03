@@ -1,0 +1,7 @@
+# World handling settings
+worlds:
+
+  # Stops the plugin from handling player positions in the specified worlds
+  disable-coordinate-handling:
+  - example-world
+  - example-world2

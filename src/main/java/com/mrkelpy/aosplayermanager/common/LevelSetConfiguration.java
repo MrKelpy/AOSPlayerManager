@@ -1,9 +1,8 @@
 package com.mrkelpy.aosplayermanager.common;
 
+import com.google.gson.*;
 import com.mrkelpy.aosplayermanager.AOSPlayerManager;
 import com.mrkelpy.aosplayermanager.util.FileUtils;
-import net.minecraft.util.com.google.gson.*;
-
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -14,21 +13,21 @@ import java.util.stream.Collectors;
  * Implements a custom configuration in the form of a JSON file that allows
  * the user to create Level sets that will share a common PlayerDataHolder.
  */
-@SuppressWarnings({"unchecked", "ConstantConditions"})
+@SuppressWarnings({"unchecked", "deprecation"})
 public class LevelSetConfiguration {
 
     public static final File LEVEL_SET_FILE = new File(AOSPlayerManager.DataFolder, "LevelSetConfigs.json");
     private static final ArrayList<ArrayList<String>> LEVEL_SETS = readLevelSetConfig();
 
     public LevelSetConfiguration() {
-        this.ensureLevelSetFileExists();
+        setup();
     }
 
     /**
      * Ensures that a LevelSetConfig file exists, and if not, creates a default one, with
      * an example set containing the world, nether and end.
      */
-    private void ensureLevelSetFileExists() {
+    public static void setup() {
 
         if (LEVEL_SET_FILE.exists())
             return;
@@ -63,7 +62,7 @@ public class LevelSetConfiguration {
             JsonParser parser = new JsonParser();
 
             // Go over all the entries in the dictionary, map them to a key:val pair, get the level_sets key, and turn it into an arraylist
-            return new Gson().fromJson(parser.parse(file).getAsJsonObject().entrySet()
+            return FileUtils.GSON.fromJson(parser.parse(file).getAsJsonObject().entrySet()
                     .stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
                     .get("level_sets"), ArrayList.class);
 

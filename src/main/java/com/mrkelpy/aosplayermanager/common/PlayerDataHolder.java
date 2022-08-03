@@ -1,31 +1,54 @@
 package com.mrkelpy.aosplayermanager.common;
 
-import com.mrkelpy.aosplayermanager.util.PlayerSerializationUtils;
+import com.google.gson.*;
+import com.mrkelpy.aosplayermanager.util.FileUtils;
+import com.mrkelpy.aosplayermanager.util.SerializationUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.entity.Entity;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
-import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.potion.PotionEffect;
 
-import java.io.Serializable;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * This class implements a way to store, serialize, and de-serialize selective sections of a player's
  * data, in order to load it into a player when needed.
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings("unused")
 public class PlayerDataHolder implements Serializable {
 
-    private Inventory playerInventory;
-    private Location playerCoordinates;
-    private Number[] playerExperience = new Number[2]; // A Pair of Int (Level) and Float (Points)
-    private Entity playerVehicle;
+    private PlayerInventory playerInventory;
+    private ArrayList<SimplePotionEffect> playerPotionEffects;
+    private PartialLocation playerCoordinates;
+    private int playerExperienceLevels;
+    private float playerExperiencePoints;
     private double playerHealth;
     private int playerHunger;
 
+    /**
+     * Constructs the PlayerDataHolder instance from the given parameters.
+     * At construction time, the data will be saved,so that a perfect replica of the saved state can be
+     * created.
+     * <br>
+     * This constructor can be used for precise control over the data that is saved.
+     */
+    public PlayerDataHolder(PlayerInventory playerInventory, PartialLocation location, Collection<PotionEffect> potionEffects, int experienceLevels,
+                            float experiencePoints, double health, int hunger) {
+        this.playerInventory = playerInventory;
+        this.playerPotionEffects = potionEffects.stream().map(SimplePotionEffect::new).collect(Collectors.toCollection(ArrayList::new));
+        this.playerCoordinates = location;
+        this.playerExperienceLevels = experienceLevels;
+        this.playerExperiencePoints = experiencePoints;
+        this.playerHealth = health;
+        this.playerHunger = hunger;
+    }
 
     /**
      * Constructs the PlayerDataHolder instance from a given player, extracting
@@ -37,23 +60,33 @@ public class PlayerDataHolder implements Serializable {
      * @param location The player location.
      *                 (This is here because the player's location can vary even for two worlds in a Set.)
      */
-    public PlayerDataHolder(Player player, Location location) {
+    public PlayerDataHolder(Player player, PartialLocation location) {
         player.saveData();
         this.playerInventory = player.getInventory();
+        this.playerPotionEffects = player.getActivePotionEffects().stream().map(SimplePotionEffect::new).collect(Collectors.toCollection(ArrayList::new));
         this.playerCoordinates = location;
-        this.playerExperience[0] = player.getLevel();
-        this.playerExperience[1] = player.getExp();
-        this.playerVehicle = player.getVehicle();
+        this.playerExperienceLevels = player.getLevel();
+        this.playerExperiencePoints = player.getExp();
         this.playerHealth = player.getHealth();
         this.playerHunger = player.getFoodLevel();
+    }
+
+    /**
+     * Alternative for {@link #PlayerDataHolder(Player, PartialLocation)} that takes a location and
+     * converts it into a PartialLocation for convenience.
+     * @param player The player to get the data from
+     * @param location The player location.
+     */
+    public PlayerDataHolder(Player player, Location location) {
+        this(player, new PartialLocation(location));
     }
 
     /**
      * Takes in a serialized PlayerDataHolder and de-serializes it, so that the PlayerDataHolder
      * can be used as normal.
      */
-    public PlayerDataHolder(Map<String, Object> serializedPlayerData) {
-        this.deserialize(serializedPlayerData);
+    public PlayerDataHolder(HashMap<String, Object> serializedPlayerData) {
+        this.deserialize(FileUtils.GSON.toJsonTree(serializedPlayerData).getAsJsonObject());
     }
 
     /**
@@ -61,16 +94,19 @@ public class PlayerDataHolder implements Serializable {
      * in the correct file.
      * @return A JSON-like object representing the PlayerDataHolder
      */
-    public Map<String, Object> serialize() {
+    public HashMap<String, Object> serialize() {
 
-        Map<String, Object> serializedPlayerdata = new HashMap<>();
+        HashMap<String, Object> serializedPlayerdata = new HashMap<>();
 
         serializedPlayerdata.put("inventory",
-                PlayerSerializationUtils.serializeInventory(this.playerInventory));
+                SerializationUtils.inventoryToBase64(this.playerInventory));
 
-        serializedPlayerdata.put("coordinates", this.playerCoordinates.serialize());
-        serializedPlayerdata.put("experience", this.playerExperience);
-        serializedPlayerdata.put("vehicle", this.playerVehicle);
+        serializedPlayerdata.put("potionEffects", this.playerPotionEffects.size() > 0
+                ? this.playerPotionEffects.stream().map(SimplePotionEffect::serialize).collect(Collectors.toList()) : null);
+
+        serializedPlayerdata.put("coordinates", this.playerCoordinates != null ? this.playerCoordinates.serialize() : null);
+        serializedPlayerdata.put("experienceLevels", this.playerExperienceLevels);
+        serializedPlayerdata.put("experiencePoints", this.playerExperiencePoints);
         serializedPlayerdata.put("health", this.playerHealth);
         serializedPlayerdata.put("hunger", this.playerHunger);
 
@@ -83,54 +119,73 @@ public class PlayerDataHolder implements Serializable {
      *
      * @param serializedPlayerData The JSON-like object to de-serialize
      */
-    public void deserialize(Map<String, Object> serializedPlayerData) {
-        this.playerInventory = serializedPlayerData.get("inventory") != null
-                ? PlayerSerializationUtils.deserializeInventory((Map<Integer, Object>) serializedPlayerData.get("inventory"))
-                : Bukkit.createInventory(null, InventoryType.PLAYER);
+    @SuppressWarnings("unchecked")
+    public void deserialize(JsonObject serializedPlayerData) {
 
-        this.playerExperience = serializedPlayerData.get("experience") != null ? (Number[]) serializedPlayerData.get("experience") : new Number[2];
-        this.playerHealth = serializedPlayerData.get("health") != null ? (double) serializedPlayerData.get("health") : 20;
-        this.playerHunger = serializedPlayerData.get("hunger") != null ? (int) serializedPlayerData.get("hunger") : 20;
+
+        this.playerInventory = serializedPlayerData.get("inventory") != null
+                ? SerializationUtils.inventoryFromBase64(FileUtils.GSON.fromJson(serializedPlayerData.get("inventory").toString(), String.class))
+                : (PlayerInventory) Bukkit.createInventory(null, InventoryType.PLAYER);
+
+        // Returns a list of the potion effects, if present, without the effects being cast to SimplePotionEffect
+        ArrayList<Object> uncastedPotionEffectList = serializedPlayerData.get("potionEffects") != null ?
+                FileUtils.GSON.fromJson(serializedPlayerData.get("potionEffects").toString(), ArrayList.class) : null;
+
+        // Casts the potion effects to SimplePotionEffect inside the list, if present.
+        this.playerPotionEffects = uncastedPotionEffectList != null ? uncastedPotionEffectList.stream().map(effect -> FileUtils.GSON.fromJson(effect.toString(), SimplePotionEffect.class))
+                .collect(Collectors.toCollection(ArrayList::new)) : null;
+
+        this.playerExperienceLevels = serializedPlayerData.get("experienceLevels") != null ? serializedPlayerData.get("experienceLevels").getAsInt() : 0;
+        this.playerExperiencePoints = serializedPlayerData.get("experiencePoints") != null ? serializedPlayerData.get("experiencePoints").getAsFloat() : 0.0F;
+        this.playerHealth = serializedPlayerData.get("health") != null ? serializedPlayerData.get("health").getAsDouble() : 20.0D;
+        this.playerHunger = serializedPlayerData.get("hunger") != null ? serializedPlayerData.get("hunger").getAsInt() : 20;
 
         // These two are the only properties that can be null, even if unknown.
-        this.playerCoordinates = serializedPlayerData.get("coordinates") != null ? Location.deserialize((Map<String, Object>) serializedPlayerData.get("coordinates")) : null;
-        this.playerVehicle = serializedPlayerData.get("vehicle") != null ? (Entity) serializedPlayerData.get("vehicle") : null;
+        this.playerCoordinates = serializedPlayerData.get("coordinates") != null ? FileUtils.GSON.fromJson(serializedPlayerData.get("coordinates"), PartialLocation.class)
+                : null;
     }
 
     /**
-     * The player needs to be somewhere in the world, so if the coordinates are null, the holder
-     * is empty.
-     * @return boolean indicating whether the holder is empty or not.
+     * Returns the player location for the level
+     * @return The player location
+     */
+    public PartialLocation getPlayerLocation() {
+        return this.playerCoordinates;
+    }
+
+    /**
+     * The player needs to exist somewhere, so if the coordinates are nulled, the data holder is empty.
+     * @return True if the data holder is empty, false otherwise.
      */
     public boolean isEmpty() {
         return this.playerCoordinates == null;
     }
 
     /**
-     * Returns the player location for the level
-     * @return
-     */
-    public Location getPlayerLocation() {
-        return this.playerCoordinates;
-    }
-
-    /**
      * Applies the Playerdata held in the PlayerDataHolder to a given player.
      */
-    public void applyTo(Player player) {
+    public void applyTo(Player player, World level) {
         player.getInventory().setContents(this.playerInventory.getContents());
-        player.setLevel(this.playerExperience[0].intValue());
-        player.setExp(this.playerExperience[1].floatValue());
+        player.setLevel(this.playerExperienceLevels);
+        player.setExp(this.playerExperiencePoints);
         player.setHealth(this.playerHealth);
         player.setFoodLevel(this.playerHunger);
 
-        if (this.isEmpty()) {  // See the logic for this implementation at PlayerDataHolder#isEmpty
-            player.teleport(this.playerCoordinates);
-            this.playerVehicle.setPassenger(player);
+        player.getActivePotionEffects().forEach(effect -> player.removePotionEffect(effect.getType()));
+        if (this.playerPotionEffects != null) {
+            for (SimplePotionEffect potionEffect : this.playerPotionEffects)
+                player.addPotionEffect(potionEffect.toPotionEffect());
+        }
+
+        // Handles the player coordinate placement. See the logic for this implementation at PlayerDataHolder#isEmpty
+        // Also, if specified in the config, the level will not handle coordinate placement.
+        if (!this.isEmpty() && !AOSPlayerManagerConfig.getConfig().getList("worlds.disable-coordinate-handling").contains(level.getName())) {
+            player.teleport(this.playerCoordinates.toLocation(level));
         }
 
         player.saveData();
     }
+
 
 }
 
