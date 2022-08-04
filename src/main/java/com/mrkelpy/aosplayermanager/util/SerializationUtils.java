@@ -1,8 +1,11 @@
 package com.mrkelpy.aosplayermanager.util;
 
 import com.mrkelpy.aosplayermanager.AOSPlayerManager;
-import net.minecraft.server.v1_7_R4.NBTCompressedStreamTools;
-import net.minecraft.server.v1_7_R4.NBTTagCompound;
+import net.minecraft.server.v1_7_R4.*;
+import org.apache.commons.lang.WordUtils;
+import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.craftbukkit.v1_7_R4.entity.CraftEntity;
 import org.bukkit.craftbukkit.v1_7_R4.inventory.CraftItemStack;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.io.BukkitObjectInputStream;
@@ -145,6 +148,74 @@ public class SerializationUtils {
             AOSPlayerManager.LOGGER.warning("Failed to decode inventory from base64 string with data: " + data);
             return null;
         }
+    }
+
+    /**
+     * Converts a CraftEntity into a sign-magnitude string of base32. This type of serialization
+     * preserves all the NBT data of the entity.
+     * @param entity The CraftEntity to convert.
+     * @return A base32 string representing the CraftEntity.
+     */
+    @SuppressWarnings("deprecation")
+    public static String entityToMagBase32(CraftEntity entity) {
+
+        // Opens a ByteArrayOutputStream and a DataOutputStream to write the data into.
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+             DataOutputStream dataOutput = new DataOutputStream(outputStream)) {
+
+            NBTTagCompound entityNBT = getEntityNBTCompound(entity);
+            entityNBT.set("id", new NBTTagString(entity.getType().getName()));
+
+            // Write the NBTTagCompound into the DataOutputStream.
+            NBTCompressedStreamTools.a(entityNBT, (DataOutput) dataOutput);
+
+            // Encode the bytearray from the DataOutputStream into a sign-magnitude integer, and convert it to a base32 string.
+            // We can't use base64 here because the number of bits would not be enough to decode later.
+            return new BigInteger(1, outputStream.toByteArray()).toString(32);
+
+        } catch (IOException | NullPointerException e) {
+            // If an error occurs for some reason, just return null.
+            return null;
+        }
+    }
+
+    /**
+     * Converts a sign-magnitude string of base32 into an NBTTagCompound. This return value can later
+     * be applied to an entity at spawn-time to set its NBT data. (See {@link World#spawn(Location, Class)}
+     * and {@link net.minecraft.server.v1_7_R4.CommandSummon#execute(ICommandListener, String[])}
+     * for the nms entity class creation).
+     * @param data The base32 string to convert.
+     * @return The NBTTagCompound represented by the base32 string.
+     */
+    public static NBTTagCompound entityFromMagBase32(String data) {
+
+        // Opens a ByteArrayInputStream and a DataInputStream to read the bytes from the base32 string.
+        try (ByteArrayInputStream inputStream = new ByteArrayInputStream(new BigInteger(data, 32).toByteArray());
+             DataInputStream dataInput = new DataInputStream(inputStream)) {
+
+            // Reads the data from the DataInputStream, in the form of an NBT compound, and returns it.
+            return NBTCompressedStreamTools.a(dataInput);
+
+        } catch (IOException | NullPointerException e) {
+            // If an error occurs for some reason, just return null.
+            return null;
+        }
+    }
+
+    /**
+     * Uses NMS to obtain the NBT data of an entity and returns it in the form of an
+     * NBTTagCompound.
+     * @param entity (CraftEntity) The entity to get the NBT data of.
+     * @return The NBTTagCompound of the entity.
+     */
+    public static NBTTagCompound getEntityNBTCompound(CraftEntity entity) {
+
+        // Converts the Entity into an NMS EntityLiving, and saves its NBT into an NBTTagCompound
+        NBTTagCompound entityNBT = new NBTTagCompound();
+        net.minecraft.server.v1_7_R4.EntityLiving nmsEntity = (EntityLiving) entity.getHandle();
+        nmsEntity.e(entityNBT);
+
+        return entityNBT;
     }
 }
 

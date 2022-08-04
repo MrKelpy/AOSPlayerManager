@@ -3,13 +3,19 @@ package com.mrkelpy.aosplayermanager.common;
 import com.google.gson.*;
 import com.mrkelpy.aosplayermanager.util.FileUtils;
 import com.mrkelpy.aosplayermanager.util.SerializationUtils;
+import com.mrkelpy.aosplayermanager.util.WorldUtils;
+import net.minecraft.server.v1_7_R4.EntityTypes;
+import net.minecraft.server.v1_7_R4.NBTTagCompound;
+import net.minecraft.server.v1_7_R4.WorldServer;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.craftbukkit.v1_7_R4.CraftWorld;
+import org.bukkit.craftbukkit.v1_7_R4.entity.CraftEntity;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.potion.PotionEffect;
 
 import java.io.*;
@@ -27,6 +33,7 @@ public class PlayerDataHolder implements Serializable {
 
     private ItemStack[] playerInventory;
     private ItemStack[] playerArmour;
+    private EntityHolder playerVehicle;
     private ArrayList<SimplePotionEffect> playerPotionEffects;
     private PartialLocation playerCoordinates;
     private int playerExperienceLevels;
@@ -41,10 +48,11 @@ public class PlayerDataHolder implements Serializable {
      * <br>
      * This constructor can be used for precise control over the data that is saved.
      */
-    public PlayerDataHolder(Inventory playerInventory, ItemStack[] playerArmour, PartialLocation location, Collection<PotionEffect> potionEffects, int experienceLevels,
-                            float experiencePoints, double health, int hunger) {
+    public PlayerDataHolder(Inventory playerInventory, ItemStack[] playerArmour, Entity playerVehicle, PartialLocation location,
+                            Collection<PotionEffect> potionEffects, int experienceLevels, float experiencePoints, double health, int hunger) {
         this.playerInventory = playerInventory.getContents();
         this.playerArmour = playerArmour;
+        this.playerVehicle = playerVehicle != null ? new EntityHolder(playerVehicle) : null;
         this.playerPotionEffects = potionEffects.stream().map(SimplePotionEffect::new).collect(Collectors.toCollection(ArrayList::new));
         this.playerCoordinates = location;
         this.playerExperienceLevels = experienceLevels;
@@ -67,6 +75,7 @@ public class PlayerDataHolder implements Serializable {
         player.saveData();
         this.playerInventory = player.getInventory().getContents();
         this.playerArmour = player.getInventory().getArmorContents();
+        this.playerVehicle = WorldUtils.scanForVehicle(player) != null ? new EntityHolder(WorldUtils.scanForVehicle(player)) : null;
         this.playerPotionEffects = player.getActivePotionEffects().stream().map(SimplePotionEffect::new).collect(Collectors.toCollection(ArrayList::new));
         this.playerCoordinates = location;
         this.playerExperienceLevels = player.getLevel();
@@ -108,6 +117,9 @@ public class PlayerDataHolder implements Serializable {
         serializedPlayerdata.put("armour",
                 SerializationUtils.itemStackArrayToBase64(this.playerArmour));
 
+        serializedPlayerdata.put("vehicle", this.playerVehicle != null
+                ?SerializationUtils.entityToMagBase32((CraftEntity) this.playerVehicle.get()) : null);
+
         serializedPlayerdata.put("potionEffects", this.playerPotionEffects.size() > 0
                 ? this.playerPotionEffects.stream().map(SimplePotionEffect::serialize).collect(Collectors.toList()) : null);
 
@@ -137,6 +149,10 @@ public class PlayerDataHolder implements Serializable {
                 SerializationUtils.itemStackArrayFromBase64(FileUtils.GSON.fromJson(serializedPlayerData.get("armour").toString(), String.class))
                 : new ItemStack[4];
 
+        this.playerVehicle = serializedPlayerData.get("vehicle") != null ?
+                new EntityHolder(SerializationUtils.entityFromMagBase32(FileUtils.GSON.fromJson(serializedPlayerData.get("vehicle").toString(), String.class)))
+                : null;
+
         // Returns a list of the potion effects, if present, without the effects being cast to SimplePotionEffect
         ArrayList<Object> uncastedPotionEffectList = serializedPlayerData.get("potionEffects") != null ?
                 FileUtils.GSON.fromJson(serializedPlayerData.get("potionEffects").toString(), ArrayList.class) : null;
@@ -156,22 +172,6 @@ public class PlayerDataHolder implements Serializable {
     }
 
     /**
-     * Returns the player location for the level
-     * @return The player location
-     */
-    public PartialLocation getPlayerLocation() {
-        return this.playerCoordinates;
-    }
-
-    /**
-     * The player needs to exist somewhere, so if the coordinates are nulled, the data holder is empty.
-     * @return True if the data holder is empty, false otherwise.
-     */
-    public boolean isEmpty() {
-        return this.playerCoordinates == null;
-    }
-
-    /**
      * Applies the Playerdata held in the PlayerDataHolder to a given player.
      */
     public void applyTo(Player player, World level) {
@@ -188,6 +188,18 @@ public class PlayerDataHolder implements Serializable {
                 player.addPotionEffect(potionEffect.toPotionEffect());
         }
 
+        // If the player has a vehicle, load it in alongside the player.
+        if (this.playerVehicle.get() != null && !this.isEmpty()) {
+
+            // Create the entity from the saved nbt data.
+            net.minecraft.server.v1_7_R4.Entity entity = EntityTypes.createEntityByName(((NBTTagCompound) this.playerVehicle.get()).getString("id"), ((CraftWorld) player.getWorld()).getHandle());
+            entity.f(((NBTTagCompound) this.playerVehicle.get()));
+
+            // Get the WorldServer instance for the world and spawn in the entity.
+            WorldServer world = ((CraftWorld) player.getWorld()).getHandle();
+            world.addEntity(entity);
+        }
+
         // Handles the player coordinate placement. See the logic for this implementation at PlayerDataHolder#isEmpty
         // Also, if specified in the config, the level will not handle coordinate placement.
         if (!this.isEmpty() && !AOSPlayerManagerConfig.getConfig().getList("worlds.disable-coordinate-handling").contains(level.getName())) {
@@ -197,6 +209,21 @@ public class PlayerDataHolder implements Serializable {
         player.saveData();
     }
 
+    /**
+     * Returns the player location for the level
+     * @return The player location
+     */
+    public PartialLocation getPlayerLocation() {
+        return this.playerCoordinates;
+    }
+
+    /**
+     * The player needs to exist somewhere, so if the coordinates are nulled, the data holder is empty.
+     * @return True if the data holder is empty, false otherwise.
+     */
+    public boolean isEmpty() {
+        return this.playerCoordinates == null;
+    }
 
 }
 
