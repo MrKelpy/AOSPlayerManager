@@ -6,16 +6,15 @@ import com.mrkelpy.aosplayermanager.common.DefaultGamemodes;
 import com.mrkelpy.aosplayermanager.common.PlayerDataHolder;
 import com.mrkelpy.aosplayermanager.util.EventUtils;
 import com.mrkelpy.aosplayermanager.util.FileUtils;
-import com.mrkelpy.aosplayermanager.util.WorldUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.inventory.ItemStack;
 
 public class onWorldChangedEvents implements Listener {
 
@@ -31,12 +30,9 @@ public class onWorldChangedEvents implements Listener {
             return;
 
         Player player = event.getPlayer();
+
         EventUtils.eventPlayerdataSave(player, player.getWorld().getName());
-
-        // Forces the despawning of the entity the player is riding so duplicates aren't created later.
-        Entity vehicle = WorldUtils.scanForVehicle(player);
-        if (vehicle != null) vehicle.remove();
-
+        player.eject();  // Ejects the player from a vehicle if they're in one
     }
 
     /**

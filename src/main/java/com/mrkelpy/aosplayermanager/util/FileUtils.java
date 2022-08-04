@@ -89,7 +89,7 @@ public class FileUtils {
      * so minecraft handles the coordinate placement.
      */
     public static File savePlayerDataForDeath(Player player, String levelName, Inventory inventory, ItemStack[] armour) {
-        PlayerDataHolder playerDataHolder = new PlayerDataHolder(inventory, armour, null, null, new ArrayList<>(),
+        PlayerDataHolder playerDataHolder = new PlayerDataHolder(inventory, armour, null, new ArrayList<>(),
                 player.getLevel(), player.getExp(), player.getMaxHealth(), 20);
 
         File playerdataFile = new File(makeLevelDirectory(levelName), player.getUniqueId().toString() + ".json");
