@@ -5,7 +5,8 @@ import com.mrkelpy.aosplayermanager.AOSPlayerManager;
 import com.mrkelpy.aosplayermanager.common.PartialLocation;
 import com.mrkelpy.aosplayermanager.common.PlayerDataHolder;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 
 import java.io.*;
 import java.lang.reflect.Modifier;
@@ -87,8 +88,8 @@ public class FileUtils {
      * any other not kept-on-death attributes to their default values, and also nulls out their location,
      * so minecraft handles the coordinate placement.
      */
-    public static File savePlayerDataForDeath(Player player, String levelName, PlayerInventory inventory) {
-        PlayerDataHolder playerDataHolder = new PlayerDataHolder(inventory, null, new ArrayList<>(),
+    public static File savePlayerDataForDeath(Player player, String levelName, Inventory inventory, ItemStack[] armour) {
+        PlayerDataHolder playerDataHolder = new PlayerDataHolder(inventory, armour, null, new ArrayList<>(),
                 player.getLevel(), player.getExp(), player.getMaxHealth(), 20);
 
         File playerdataFile = new File(makeLevelDirectory(levelName), player.getUniqueId().toString() + ".json");
@@ -97,11 +98,11 @@ public class FileUtils {
     }
 
     /**
-     * Shortcut for the {@link FileUtils#savePlayerDataForDeath(Player, String, PlayerInventory)} method,
+     * Shortcut for the {@link FileUtils#savePlayerDataForDeath(Player, String, Inventory, ItemStack[])} method,
      * setting inventory as the player's inventory.
      */
     public static File savePlayerDataForDeath(Player player, String levelName) {
-        return savePlayerDataForDeath(player, levelName, player.getInventory());
+        return savePlayerDataForDeath(player, levelName, player.getInventory(), player.getInventory().getArmorContents());
     }
 
 

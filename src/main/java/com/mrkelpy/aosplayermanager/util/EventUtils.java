@@ -5,7 +5,8 @@ import com.mrkelpy.aosplayermanager.common.PartialLocation;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
-import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,8 +35,6 @@ public class EventUtils {
             if (level.equals(levelName)) continue; // Skips the level we are saving to.
             FileUtils.savePlayerData(player, level, FileUtils.getPlayerData(player, level).getPlayerLocation());
         }
-
-
     }
 
     /**
@@ -51,19 +50,22 @@ public class EventUtils {
 
         // Check if the world is in a set
         List<ArrayList<String>> levelSet = LevelSetConfiguration.getLevelSets().stream().filter(set -> set.contains(levelName)).collect(Collectors.toList());
-        PlayerInventory inventory = player.getInventory();
+        Inventory inventory = player.getInventory();
+        ItemStack[] armour = player.getInventory().getArmorContents();
 
-        if (!Boolean.getBoolean(player.getWorld().getGameRuleValue("keepInventory")))
-            inventory = (PlayerInventory) Bukkit.createInventory(player, InventoryType.PLAYER);
+        if (!Boolean.getBoolean(player.getWorld().getGameRuleValue("keepInventory"))) {
+            inventory = Bukkit.createInventory(player, InventoryType.PLAYER);
+            armour = new ItemStack[4];
+        }
 
-        FileUtils.savePlayerDataForDeath(player, levelName, inventory);
+        FileUtils.savePlayerDataForDeath(player, levelName, inventory, armour);
 
         // Applies the playerdata for every world in the set, save for the location.
         if (levelSet.isEmpty()) return;
 
         for (String level : levelSet.get(0)) {
             if (level.equals(levelName)) continue; // Skips the level we are saving to.
-            FileUtils.savePlayerDataForDeath(player, level, inventory);
+            FileUtils.savePlayerDataForDeath(player, level, inventory, armour);
         }
     }
 

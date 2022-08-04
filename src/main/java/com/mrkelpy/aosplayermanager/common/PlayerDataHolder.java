@@ -7,6 +7,7 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.potion.PotionEffect;
@@ -40,10 +41,10 @@ public class PlayerDataHolder implements Serializable {
      * <br>
      * This constructor can be used for precise control over the data that is saved.
      */
-    public PlayerDataHolder(PlayerInventory playerInventory, PartialLocation location, Collection<PotionEffect> potionEffects, int experienceLevels,
+    public PlayerDataHolder(Inventory playerInventory, ItemStack[] playerArmour, PartialLocation location, Collection<PotionEffect> potionEffects, int experienceLevels,
                             float experiencePoints, double health, int hunger) {
         this.playerInventory = playerInventory.getContents();
-        this.playerArmour = playerInventory.getArmorContents();
+        this.playerArmour = playerArmour;
         this.playerPotionEffects = potionEffects.stream().map(SimplePotionEffect::new).collect(Collectors.toCollection(ArrayList::new));
         this.playerCoordinates = location;
         this.playerExperienceLevels = experienceLevels;
