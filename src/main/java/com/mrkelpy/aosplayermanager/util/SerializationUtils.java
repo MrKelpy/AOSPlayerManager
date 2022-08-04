@@ -12,17 +12,20 @@ import org.yaml.snakeyaml.external.biz.base64Coder.Base64Coder;
 import java.io.*;
 import java.math.BigInteger;
 
+/**
+ * This class implements a series of methods useful for serializing/deserializing objects used
+ * in Minecraft.
+ */
 public class SerializationUtils {
 
-
     /**
-     * Converts an ItemStack into a base64 string. This is a type of serialization that not only is smaller
+     * Converts an ItemStack into a sign-magnitude string of base32. This is a type of serialization that not only is smaller
      * than just serializing the inventory to JSON, but also cleaner, and one that retains all the information.
      *
      * @param item The ItemStack to convert.
-     * @return A base64 string representing the ItemStack.
+     * @return A sign-magnitude string of base32 string representing the ItemStack.
      */
-    public static String itemStackToBase64(ItemStack item) {
+    public static String itemStackToMagBase32(ItemStack item) {
 
         // Opens a ByteArrayOutputStream and a DataOutputStream to write the data into.
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -32,7 +35,8 @@ public class SerializationUtils {
             net.minecraft.server.v1_7_R4.ItemStack nmsItem = CraftItemStack.asNMSCopy(item);
             NBTCompressedStreamTools.a(nmsItem.save(new NBTTagCompound()), (DataOutput) dataOutput);
 
-            // Encode the bytearray from the DataOutputStream into a base64 string.
+            // Encode the bytearray from the DataOutputStream into a sign-magnitude integer, and convert it to a base32 string.
+            // We can't use base64 here because the number of bits would not be enough to decode later.
             return new BigInteger(1, outputStream.toByteArray()).toString(32);
 
         } catch (IOException | NullPointerException e) {
@@ -42,15 +46,15 @@ public class SerializationUtils {
     }
 
     /**
-     * Converts a base64 string into an ItemStack. This method expects a base64 string coming from
-     * {@link #itemStackToBase64(ItemStack)}.
+     * Converts a sign-magnitude string of base32 into an ItemStack. This method expects a base32 string coming from
+     * {@link #itemStackToMagBase32(ItemStack)}.
      *
-     * @param data The base64 string to convert.
-     * @return The ItemStack represented by the base64 string.
+     * @param data The base32 string to convert.
+     * @return The ItemStack represented by the base32 string.
      */
-    public static ItemStack itemStackFromBase64(String data) {
+    public static ItemStack itemStackFromMagBase32(String data) {
 
-        // Opens a ByteArrayInputStream and a DataInputStream to read the bytes from the base64 string.
+        // Opens a ByteArrayInputStream and a DataInputStream to read the bytes from the base32 string.
         try (ByteArrayInputStream inputStream = new ByteArrayInputStream(new BigInteger(data, 32).toByteArray());
              DataInputStream dataInput = new DataInputStream(inputStream)) {
 
@@ -69,10 +73,10 @@ public class SerializationUtils {
 
     /**
      * Converts an itemStack[] into a base64 string. This is a shortcut for manually converting each item through
-     * {@link #itemStackToBase64(ItemStack)} and then concatenating them together.
+     * {@link #itemStackToMagBase32(ItemStack)} and then concatenating them together.
      *
      * @param stackArray The itemStack[] to convert.
-     * @return A base64 string representing the PlayerInventory.
+     * @return A base64 string representing the ItemStack[].
      */
     public static String itemStackArrayToBase64(ItemStack[] stackArray) {
 
@@ -82,12 +86,24 @@ public class SerializationUtils {
 
             dataOutput.writeInt(stackArray.length);  // Write the size of the inventory into the stream, so it can be decoded later
 
-            // Loop through each item in the inventory and convert it to a base64 string.
-            for (ItemStack itemStack : stackArray)
-                handleConversion(itemStack, dataOutput);
+            // Loop through each item in the inventory and convert it to a base32 string.
+            for (ItemStack itemStack : stackArray) {
+                String base64ItemStack = SerializationUtils.itemStackToMagBase32(itemStack);
+
+                // Check if the base32 string is null and if not, write it to the stream.
+                if (base64ItemStack != null) {
+                    dataOutput.writeObject(base64ItemStack);
+                    continue;
+                }
+
+                // Writes a null string to the stream if the base64 string is null.
+                dataOutput.writeObject(null);
+            }
 
             dataOutput.close();
-            return Base64Coder.encodeLines(outputStream.toByteArray());  // Return the base64 string of the inventory
+            // Return the base64 string of the inventory. We can use base64 here, since everything is pretty much already handled
+            // by the Mag32 strings, so let's do it.
+            return Base64Coder.encodeLines(outputStream.toByteArray());
 
         } catch (IOException e) {
             // If an error occurs for some reason, just log it as a warning and return null.
@@ -98,7 +114,7 @@ public class SerializationUtils {
 
     /**
      * Converts a base64 string into an itemStack[]. This is a shortcut for manually converting each item through
-     * {@link #itemStackFromBase64(String)}, and is meant to be used with inventories.
+     * {@link #itemStackFromMagBase32(String)}, and is meant to be used with inventories.
      *
      * @param data The base64 string to convert.
      * @return The ItemStack[] represented by the base64 string.
@@ -118,7 +134,7 @@ public class SerializationUtils {
 
                 // If the itemStack is not null, set the item in the inventory at the current index to the itemStack.
                 if (base64Data != null)
-                    inventoryContents[i] = SerializationUtils.itemStackFromBase64((String) base64Data);
+                    inventoryContents[i] = SerializationUtils.itemStackFromMagBase32((String) base64Data);
             }
 
             dataInput.close();
@@ -126,29 +142,9 @@ public class SerializationUtils {
 
         } catch (IOException | ClassNotFoundException e) {
             // If an error occurs for some reason, just log it as a warning and return null.
-            AOSPlayerManager.LOGGER.warning("Failed to decode inventory to base64 string with data: " + data);
+            AOSPlayerManager.LOGGER.warning("Failed to decode inventory from base64 string with data: " + data);
             return null;
         }
-    }
-
-    /**
-     * Handles the conversion of an item stack to a base64 string, within the context of an itemStack[] conversion.
-     * @param itemStack The item stack to convert.
-     * @param dataOutput The data output stream to write the base64 string to.
-     * @throws IOException If an error occurs while writing to the data output stream.
-     */
-    public static void handleConversion(ItemStack itemStack, BukkitObjectOutputStream dataOutput) throws IOException {
-
-        String base64ItemStack = SerializationUtils.itemStackToBase64(itemStack);
-
-        // Check if the base64 string is null and if not, write it to the stream.
-        if (base64ItemStack != null) {
-            dataOutput.writeObject(base64ItemStack);
-            return;
-        }
-
-        // Writes a null string to the stream if the base64 string is null.
-        dataOutput.writeObject(null);
     }
 }
 
