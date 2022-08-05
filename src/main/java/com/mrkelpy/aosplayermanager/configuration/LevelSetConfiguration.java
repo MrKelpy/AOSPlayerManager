@@ -64,7 +64,7 @@ public class LevelSetConfiguration {
                 return levelSet;
             }
         }
-        return (ArrayList<String>) Arrays.asList(worldName, "");
+        return new ArrayList<>(Arrays.asList(worldName, ""));
     }
 
     /**
