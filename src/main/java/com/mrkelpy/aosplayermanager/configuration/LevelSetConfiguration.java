@@ -64,7 +64,7 @@ public class LevelSetConfiguration {
                 return levelSet;
             }
         }
-        return (ArrayList<String>) Collections.singletonList(worldName);
+        return (ArrayList<String>) Arrays.asList(worldName, "");
     }
 
     /**
