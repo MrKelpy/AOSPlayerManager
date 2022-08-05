@@ -1,6 +1,8 @@
 package com.mrkelpy.aosplayermanager.util;
 
-import com.mrkelpy.aosplayermanager.common.LevelSetConfiguration;
+import com.mrkelpy.aosplayermanager.AOSPlayerManager;
+import com.mrkelpy.aosplayermanager.configuration.AOSPlayerManagerConfig;
+import com.mrkelpy.aosplayermanager.configuration.LevelSetConfiguration;
 import com.mrkelpy.aosplayermanager.common.PartialLocation;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -23,17 +25,17 @@ public class EventUtils {
      */
     public static void eventPlayerdataSave(Player player, String levelName) {
 
-        // Check if the world is in a set
-        List<ArrayList<String>> levelSet = LevelSetConfiguration.getLevelSets().stream().filter(set -> set.contains(levelName)).collect(Collectors.toList());
+        // If the null-coordinates setting is enabled for this level, don't save the coordinates for it or the set.
+        boolean nullCoordinates = AOSPlayerManagerConfig.getConfig().getList("worlds.null-coordinates").contains(levelName);
 
-        FileUtils.savePlayerData(player, levelName, new PartialLocation(player.getLocation()));
+        FileUtils.savePlayerData(player, levelName, nullCoordinates ? null : new PartialLocation(player.getLocation()));
 
         // Applies the playerdata for every world in the set, save for the location.
-        if (levelSet.isEmpty()) return;
+        if (LevelSetConfiguration.getLevelSetFor(levelName).isEmpty()) return;
 
-        for (String level : levelSet.get(0)) {
+        for (String level : LevelSetConfiguration.getLevelSetFor(levelName)) {
             if (level.equals(levelName)) continue; // Skips the level we are saving to.
-            FileUtils.savePlayerData(player, level, FileUtils.getPlayerData(player, level).getPlayerLocation());
+            FileUtils.savePlayerData(player, level, nullCoordinates ? null : FileUtils.getPlayerData(player, level).getPlayerLocation());
         }
     }
 

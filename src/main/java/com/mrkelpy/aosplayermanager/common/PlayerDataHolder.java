@@ -1,6 +1,8 @@
 package com.mrkelpy.aosplayermanager.common;
 
 import com.google.gson.*;
+import com.mrkelpy.aosplayermanager.configuration.AOSPlayerManagerConfig;
+import com.mrkelpy.aosplayermanager.configuration.LevelSetConfiguration;
 import com.mrkelpy.aosplayermanager.util.FileUtils;
 import com.mrkelpy.aosplayermanager.util.SerializationUtils;
 import org.bukkit.Location;
@@ -9,13 +11,13 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.potion.PotionEffect;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -188,8 +190,6 @@ public class PlayerDataHolder implements Serializable {
                 player.addPotionEffect(potionEffect.toPotionEffect());
         }
 
-        // Handles the player coordinate placement. See the logic for this implementation at PlayerDataHolder#isEmpty
-        // Also, if specified in the config, the level will not handle coordinate placement.
         if (!this.isEmpty() && !AOSPlayerManagerConfig.getConfig().getList("worlds.disable-coordinate-handling").contains(level.getName())) {
             player.teleport(this.playerCoordinates.toLocation(level));
         }

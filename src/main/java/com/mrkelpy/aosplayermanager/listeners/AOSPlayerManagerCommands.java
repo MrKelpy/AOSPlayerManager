@@ -1,6 +1,6 @@
 package com.mrkelpy.aosplayermanager.listeners;
 
-import com.mrkelpy.aosplayermanager.common.LevelSetConfiguration;
+import com.mrkelpy.aosplayermanager.configuration.LevelSetConfiguration;
 import com.mrkelpy.aosplayermanager.util.FileUtils;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;

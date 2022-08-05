@@ -1,6 +1,6 @@
 <component name="ArtifactManager">
   <artifact type="jar" name="AOSPlayerManager:jar">
-    <output-path>$USER_HOME$/Desktop/testserver/server_files/plugins</output-path>
+    <output-path>$USER_HOME$/Desktop/testserver/plugins</output-path>
     <root id="archive" name="AOSPlayerManager.jar">
       <element id="module-output" name="AOSPlayerManager" />
       <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/github/azbh111/craftbukkit-1.7.10/R/craftbukkit-1.7.10-R.jar" path-in-jar="/" />

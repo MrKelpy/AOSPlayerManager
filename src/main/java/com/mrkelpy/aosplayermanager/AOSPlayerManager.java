@@ -1,7 +1,7 @@
 package com.mrkelpy.aosplayermanager;
 
-import com.mrkelpy.aosplayermanager.common.AOSPlayerManagerConfig;
-import com.mrkelpy.aosplayermanager.common.LevelSetConfiguration;
+import com.mrkelpy.aosplayermanager.configuration.AOSPlayerManagerConfig;
+import com.mrkelpy.aosplayermanager.configuration.LevelSetConfiguration;
 import com.mrkelpy.aosplayermanager.listeners.AOSPlayerManagerCommands;
 import com.mrkelpy.aosplayermanager.listeners.PlayerDataSavingEvents;
 import com.mrkelpy.aosplayermanager.listeners.onWorldChangedEvents;

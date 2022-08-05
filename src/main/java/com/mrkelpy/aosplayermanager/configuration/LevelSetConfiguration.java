@@ -1,4 +1,4 @@
-package com.mrkelpy.aosplayermanager.common;
+package com.mrkelpy.aosplayermanager.configuration;
 
 import com.google.gson.*;
 import com.mrkelpy.aosplayermanager.AOSPlayerManager;
@@ -50,6 +50,21 @@ public class LevelSetConfiguration {
 
     public static ArrayList<ArrayList<String>> getLevelSets() {
         return LEVEL_SETS;
+    }
+
+    /**
+     * Returns the Level Set that contains the given world.
+     * @param worldName The name of the world to search for.
+     * @return The Level Set that contains the given world.
+     */
+    public static ArrayList<String> getLevelSetFor(String worldName) {
+
+        for (ArrayList<String> levelSet : LEVEL_SETS) {
+            if (levelSet.contains(worldName)) {
+                return levelSet;
+            }
+        }
+        return (ArrayList<String>) Collections.singletonList(worldName);
     }
 
     /**

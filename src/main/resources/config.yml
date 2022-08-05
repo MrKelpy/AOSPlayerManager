@@ -3,5 +3,10 @@ worlds:
 
   # Stops the plugin from handling player positions in the specified worlds
   disable-coordinate-handling:
-  - example-world
-  - example-world2
+    - example-world
+    - example-world2
+
+  # Stops the plugin from handling player positions in the specified worlds or their sets, once they enter them.
+  null-coordinates:
+    - example-world3
+    - example-world4

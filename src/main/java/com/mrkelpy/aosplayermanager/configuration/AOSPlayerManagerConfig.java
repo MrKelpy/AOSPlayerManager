@@ -1,4 +1,4 @@
-package com.mrkelpy.aosplayermanager.common;
+package com.mrkelpy.aosplayermanager.configuration;
 
 import com.mrkelpy.aosplayermanager.AOSPlayerManager;
 import org.bukkit.Bukkit;
@@ -30,6 +30,9 @@ public class AOSPlayerManagerConfig {
 
         if (!getConfig().contains("worlds.disable-coordinate-handling"))
             getConfig().set("worlds.disable-coordinate-handling", Arrays.asList("example-world", "example-world2"));
+
+        if (!getConfig().contains("worlds.null-coordinates"))
+            getConfig().set("worlds.null-coordinates", Arrays.asList("example-world3", "example-world4"));
     }
 
     /**
