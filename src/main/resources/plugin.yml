@@ -1,5 +1,5 @@
 name: AOSPlayerManager
-version: 1.0
+version: 1.1.0
 description: Tailor-Made plugin for the Age of Sauron Server, to manage player inventories and positions across worlds
 author: MrKelpy
 main: com.mrkelpy.aosplayermanager.AOSPlayerManager

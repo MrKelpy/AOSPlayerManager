@@ -35,14 +35,14 @@ public class LevelSetConfiguration {
         // Create all the needed json objects
         JsonObject levelSetConfig = new JsonObject();
         JsonArray worlds = new JsonArray();
-        JsonArray defalultLevelSet = new JsonArray();
+        JsonArray defaultLevelSet = new JsonArray();
 
         // Add the levels into the default set
-        defalultLevelSet.add(new JsonPrimitive("world"));
-        defalultLevelSet.add(new JsonPrimitive("world_nether"));
-        defalultLevelSet.add(new JsonPrimitive("world_the_end"));
+        defaultLevelSet.add(new JsonPrimitive("world"));
+        defaultLevelSet.add(new JsonPrimitive("world_nether"));
+        defaultLevelSet.add(new JsonPrimitive("world_the_end"));
 
-        worlds.add(defalultLevelSet);  // Add the default set to the list of level sets
+        worlds.add(defaultLevelSet);  // Add the default set to the list of level sets
 
         levelSetConfig.add("level_sets", worlds);
         FileUtils.writeJson(LEVEL_SET_FILE.getPath(), levelSetConfig);
@@ -57,6 +57,7 @@ public class LevelSetConfiguration {
      * @param worldName The name of the world to search for.
      * @return The Level Set that contains the given world.
      */
+    @SuppressWarnings("ArraysAsListWithZeroOrOneArgument")
     public static ArrayList<String> getLevelSetFor(String worldName) {
 
         for (ArrayList<String> levelSet : LEVEL_SETS) {
@@ -64,7 +65,7 @@ public class LevelSetConfiguration {
                 return levelSet;
             }
         }
-        return new ArrayList<>(Arrays.asList(worldName, ""));
+        return new ArrayList<>(Arrays.asList(worldName));
     }
 
     /**

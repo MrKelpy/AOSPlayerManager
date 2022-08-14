@@ -4,15 +4,15 @@ import com.google.gson.*;
 import com.mrkelpy.aosplayermanager.AOSPlayerManager;
 import com.mrkelpy.aosplayermanager.common.PartialLocation;
 import com.mrkelpy.aosplayermanager.common.PlayerDataHolder;
+import org.bukkit.craftbukkit.v1_7_R4.entity.CraftEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import java.io.*;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -84,13 +84,56 @@ public class FileUtils {
     }
 
     /**
+     * Creates a backup of the player's current data inside plugin/AOSPlayerDimensions/backups/UUID/date.
+     * <br>
+     * This method is meant to be used in conjunction with {@link FileUtils#savePlayerData(Player, String, PartialLocation)},
+     * but it can be used without it.
+     * @param player The player to save the data from
+     * @param levelName The level to save the data to
+     * @return The File instance containing the data
+     */
+    public static File backupPlayerData(Player player, String levelName, PartialLocation location) {
+
+        // Create the necessary resources to save the player's data (The path to the backup directory, the date formatted to the filename,
+        // and the playerdata holder with the data to save)
+        File playerLevelBackup = makeLevelDirectory("backups/" + levelName + "/" + player.getUniqueId().toString());
+        String date = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
+        PlayerDataHolder playerDataHolder = new PlayerDataHolder(player, location);
+
+        // Create the final path destination for the backup and write the data to it
+        File playerdataBackupFile = new File(playerLevelBackup, date + ".json");
+        FileUtils.writeJson(playerdataBackupFile.getPath(), FileUtils.GSON.toJsonTree(playerDataHolder.serialize()).getAsJsonObject());
+        return playerdataBackupFile;
+    }
+
+    /**
+     * Shortcut for the {@link FileUtils#backupPlayerData(Player, String, PartialLocation)} method,
+     * setting the location as the player's location.
+     * @param player The player to save the data from
+     * @param levelName The level to save the data to
+     * @return The File instance containing the data
+     */
+    public static File backupPlayerData(Player player, String levelName) {
+        return backupPlayerData(player, levelName, new PartialLocation(player.getLocation()));
+    }
+
+    /**
      * Acts like the {@link FileUtils#savePlayerData(Player, String, PartialLocation)}, but resets the HP and
      * any other not kept-on-death attributes to their default values, and also nulls out their location,
      * so minecraft handles the coordinate placement.
      */
     public static File savePlayerDataForDeath(Player player, String levelName, Inventory inventory, ItemStack[] armour) {
-        PlayerDataHolder playerDataHolder = new PlayerDataHolder(inventory, armour, null, new ArrayList<>(),
-                player.getLevel(), player.getExp(), player.getMaxHealth(), 20);
+
+        // Adds the vital data for the player for the death case.
+        Queue<Object> data = new LinkedList<>();
+        data.add(inventory.getContents());
+        data.add(armour);
+        data.add(new ArrayList<>());
+        data.add(null);
+        data.add(player.getMaxHealth());
+        data.add(20);
+
+        PlayerDataHolder playerDataHolder = new PlayerDataHolder(player, data);
 
         File playerdataFile = new File(makeLevelDirectory(levelName), player.getUniqueId().toString() + ".json");
         FileUtils.writeJson(playerdataFile.getPath(), FileUtils.GSON.toJsonTree(playerDataHolder.serialize()).getAsJsonObject());
@@ -105,7 +148,6 @@ public class FileUtils {
         return savePlayerDataForDeath(player, levelName, player.getInventory(), player.getInventory().getArmorContents());
     }
 
-
     /**
      * Accesses the playerdata file for a player in a level, and loads it into a PlayerDataHolder.
      * @param player The player to get the data from
@@ -118,7 +160,6 @@ public class FileUtils {
         HashMap<String, Object> playerData = (HashMap<String, Object>) FileUtils.readJson(playerdataFile.getPath());
         return new PlayerDataHolder(playerData);
     }
-
 
     /**
      * Returns a list of all the directories  names inside the plugin dimension list, which

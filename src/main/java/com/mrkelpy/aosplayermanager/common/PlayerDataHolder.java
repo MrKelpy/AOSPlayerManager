@@ -2,14 +2,12 @@ package com.mrkelpy.aosplayermanager.common;
 
 import com.google.gson.*;
 import com.mrkelpy.aosplayermanager.configuration.AOSPlayerManagerConfig;
-import com.mrkelpy.aosplayermanager.configuration.LevelSetConfiguration;
 import com.mrkelpy.aosplayermanager.util.FileUtils;
 import com.mrkelpy.aosplayermanager.util.SerializationUtils;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 
@@ -17,14 +15,14 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
+import java.util.Queue;
 import java.util.stream.Collectors;
 
 /**
  * This class implements a way to store, serialize, and de-serialize selective sections of a player's
  * data, in order to load it into a player when needed.
  */
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "unchecked"})
 public class PlayerDataHolder implements Serializable {
 
     private ItemStack[] playerInventory;
@@ -37,22 +35,23 @@ public class PlayerDataHolder implements Serializable {
     private int playerHunger;
 
     /**
-     * Constructs the PlayerDataHolder instance from the given parameters.
-     * At construction time, the data will be saved,so that a perfect replica of the saved state can be
-     * created.
+     * Constructs the PlayerDataHolder using a Queue(Object) that contains extra data to be unpacked.
+     * The data needs to be packed in the same order as it is unpacked in this ctor.
      * <br>
      * This constructor can be used for precise control over the data that is saved.
      */
-    public PlayerDataHolder(Inventory playerInventory, ItemStack[] playerArmour, PartialLocation location, Collection<PotionEffect> potionEffects, int experienceLevels,
-                            float experiencePoints, double health, int hunger) {
-        this.playerInventory = playerInventory.getContents();
-        this.playerArmour = playerArmour;
+    public PlayerDataHolder(Player player, Queue<Object> data) {
+        this.playerInventory = (ItemStack[]) data.remove();
+        this.playerArmour = (ItemStack[]) data.remove();
+
+        Collection<PotionEffect> potionEffects = (Collection<PotionEffect>) data.remove();
         this.playerPotionEffects = potionEffects.stream().map(SimplePotionEffect::new).collect(Collectors.toCollection(ArrayList::new));
-        this.playerCoordinates = location;
-        this.playerExperienceLevels = experienceLevels;
-        this.playerExperiencePoints = experiencePoints;
-        this.playerHealth = health;
-        this.playerHunger = hunger;
+
+        this.playerCoordinates = (PartialLocation) data.remove();
+        this.playerExperienceLevels = player.getLevel();
+        this.playerExperiencePoints = player.getExp();
+        this.playerHealth = (double) data.remove();
+        this.playerHunger = (int) data.remove();
     }
 
     /**
@@ -63,7 +62,7 @@ public class PlayerDataHolder implements Serializable {
      * created.
      * @param player The player to get the data from
      * @param location The player location.
-     *                 (This is here because the player's location can vary even for two worlds in a Set.)
+     *(This is here because the player's location can vary even for two worlds in a Set.)
      */
     public PlayerDataHolder(Player player, PartialLocation location) {
         player.saveData();
@@ -158,14 +157,6 @@ public class PlayerDataHolder implements Serializable {
     }
 
     /**
-     * Returns the player location for the level
-     * @return The player location
-     */
-    public PartialLocation getPlayerLocation() {
-        return this.playerCoordinates;
-    }
-
-    /**
      * The player needs to exist somewhere, so if the coordinates are nulled, the data holder is empty.
      * @return True if the data holder is empty, false otherwise.
      */
@@ -191,12 +182,43 @@ public class PlayerDataHolder implements Serializable {
         }
 
         if (!this.isEmpty() && !AOSPlayerManagerConfig.getConfig().getList("worlds.disable-coordinate-handling").contains(level.getName())) {
+            level.getChunkAt(this.playerCoordinates.toLocation(level)).load();
             player.teleport(this.playerCoordinates.toLocation(level));
         }
 
         player.saveData();
     }
 
+    public ItemStack[] getPlayerInventory() {
+        return this.playerInventory;
+    }
 
+    public ItemStack[] getPlayerArmour() {
+        return this.playerArmour;
+    }
+
+    public ArrayList<SimplePotionEffect> getPlayerPotionEffects() {
+        return this.playerPotionEffects;
+    }
+
+    public PartialLocation getPlayerCoordinates() {
+        return this.playerCoordinates;
+    }
+
+    public int getPlayerExperienceLevels() {
+        return this.playerExperienceLevels;
+    }
+
+    public float getPlayerExperiencePoints() {
+        return this.playerExperiencePoints;
+    }
+
+    public double getPlayerHealth() {
+        return this.playerHealth;
+    }
+
+    public int getPlayerHunger() {
+        return this.playerHunger;
+    }
 }
 

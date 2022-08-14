@@ -33,6 +33,9 @@ public class AOSPlayerManagerConfig {
 
         if (!getConfig().contains("worlds.null-coordinates"))
             getConfig().set("worlds.null-coordinates", Arrays.asList("example-world3", "example-world4"));
+
+        if (!getConfig().contains("worlds.global-save-tick-interval"))
+            getConfig().set("worlds.global-save-tick-interval", 20*60*5);
     }
 
     /**

@@ -2,9 +2,10 @@ package com.mrkelpy.aosplayermanager;
 
 import com.mrkelpy.aosplayermanager.configuration.AOSPlayerManagerConfig;
 import com.mrkelpy.aosplayermanager.configuration.LevelSetConfiguration;
-import com.mrkelpy.aosplayermanager.listeners.AOSPlayerManagerCommands;
-import com.mrkelpy.aosplayermanager.listeners.PlayerDataSavingEvents;
-import com.mrkelpy.aosplayermanager.listeners.onWorldChangedEvents;
+import com.mrkelpy.aosplayermanager.events.AOSPlayerManagerCommands;
+import com.mrkelpy.aosplayermanager.events.GlobalPeriodicDataSavingEvent;
+import com.mrkelpy.aosplayermanager.events.PlayerDataSavingEvents;
+import com.mrkelpy.aosplayermanager.events.onWorldChangedEvents;
 import com.mrkelpy.aosplayermanager.util.FileUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -50,6 +51,7 @@ public class AOSPlayerManager extends JavaPlugin {
         LOGGER.info("AOSPlayerManager has been enabled!");
         this.getServer().getPluginManager().registerEvents(new onWorldChangedEvents(), this);
         this.getServer().getPluginManager().registerEvents(new PlayerDataSavingEvents(), this);
+        new GlobalPeriodicDataSavingEvent().runTaskTimer(this);
         this.registerCommands();
     }
 

@@ -1,4 +1,4 @@
-package com.mrkelpy.aosplayermanager.listeners;
+package com.mrkelpy.aosplayermanager.events;
 
 import com.mrkelpy.aosplayermanager.AOSPlayerManager;
 import com.mrkelpy.aosplayermanager.common.DefaultGamemodes;
@@ -8,7 +8,6 @@ import com.mrkelpy.aosplayermanager.configuration.AOSPlayerManagerConfig;
 import com.mrkelpy.aosplayermanager.util.EventUtils;
 import com.mrkelpy.aosplayermanager.util.FileUtils;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -31,8 +30,8 @@ public class onWorldChangedEvents implements Listener {
 
         Player player = event.getPlayer();
 
+        if (player.isInsideVehicle()) player.leaveVehicle();  // Kicks the player from the vehicle if they are inside one.
         EventUtils.eventPlayerdataSave(player, player.getWorld().getName());
-        player.eject();  // Ejects the player from a vehicle if they're in one
     }
 
     /**

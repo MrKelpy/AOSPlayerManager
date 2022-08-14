@@ -1,12 +1,11 @@
-package com.mrkelpy.aosplayermanager.listeners;
+package com.mrkelpy.aosplayermanager.events;
 
 import com.mrkelpy.aosplayermanager.util.EventUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.inventory.InventoryCloseEvent;
-import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.event.world.WorldSaveEvent;
 
@@ -22,8 +21,8 @@ public class PlayerDataSavingEvents implements Listener {
     public void onPlayerQuit(PlayerQuitEvent event) {
 
         Player player = event.getPlayer();
-        player.eject();
         EventUtils.eventPlayerdataSave(player, player.getWorld().getName());
+        EventUtils.eventPlayerdataBackup(player, player.getWorld().getName());
     }
 
     /**
@@ -34,33 +33,6 @@ public class PlayerDataSavingEvents implements Listener {
     public void onPlayerBedLeave(PlayerBedLeaveEvent event) {
 
         Player player = event.getPlayer();
-        EventUtils.eventPlayerdataSave(player, player.getWorld().getName());
-    }
-
-    /**
-     * Handles the saving of playerdata when a player opens an inventory
-     * @param event InventoryOpenEvent
-     */
-    @EventHandler
-    public void onPlayerInventoryOpen(InventoryOpenEvent event) {
-
-        if (!(event.getPlayer() instanceof Player)) return;
-
-        Player player = (Player) event.getPlayer();
-        EventUtils.eventPlayerdataSave(player, player.getWorld().getName());
-    }
-
-
-    /**
-     * Handles the saving of playerdata when a player closes their inventory
-     * @param event InventoryCloseEvent
-     */
-    @EventHandler
-    public void onPlayerInventoryClose(InventoryCloseEvent event) {
-
-        if (!(event.getPlayer() instanceof Player)) return;
-
-        Player player = (Player) event.getPlayer();
         EventUtils.eventPlayerdataSave(player, player.getWorld().getName());
     }
 
@@ -107,11 +79,10 @@ public class PlayerDataSavingEvents implements Listener {
 
         List<Player> worldPlayerList = event.getWorld().getPlayers();
 
-        for (Player player : worldPlayerList)
+        for (Player player : worldPlayerList) {
             EventUtils.eventPlayerdataSave(player, player.getWorld().getName());
-
+            EventUtils.eventPlayerdataBackup(player, player.getWorld().getName());
+        }
     }
-
-
 }
 

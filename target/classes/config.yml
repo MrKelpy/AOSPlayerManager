@@ -1,4 +1,3 @@
-# World handling settings
 worlds:
 
   # Stops the plugin from handling player positions in the specified worlds
@@ -10,3 +9,8 @@ worlds:
   null-coordinates:
     - example-world3
     - example-world4
+
+  # Configures the interval between global data saves. (Lower bound shadow-set to 1 minute)
+  global-save-tick-interval: 6000
+
+

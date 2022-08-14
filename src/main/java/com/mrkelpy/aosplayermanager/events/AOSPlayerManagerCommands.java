@@ -1,4 +1,4 @@
-package com.mrkelpy.aosplayermanager.listeners;
+package com.mrkelpy.aosplayermanager.events;
 
 import com.mrkelpy.aosplayermanager.configuration.LevelSetConfiguration;
 import com.mrkelpy.aosplayermanager.util.FileUtils;
