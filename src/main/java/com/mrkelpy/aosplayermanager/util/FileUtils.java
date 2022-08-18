@@ -2,15 +2,20 @@ package com.mrkelpy.aosplayermanager.util;
 
 import com.google.gson.*;
 import com.mrkelpy.aosplayermanager.AOSPlayerManager;
+import com.mrkelpy.aosplayermanager.common.BackupHolder;
 import com.mrkelpy.aosplayermanager.common.PartialLocation;
 import com.mrkelpy.aosplayermanager.common.PlayerDataHolder;
-import org.bukkit.craftbukkit.v1_7_R4.entity.CraftEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.lang.reflect.Modifier;
+import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -162,6 +167,66 @@ public class FileUtils {
     }
 
     /**
+     * Accesses the backups folders for a player in a certain level and returns an ArrayList containing all the backups
+     * created in the form of a BackupHolder.
+     * @param player The player to get the data from
+     * @param levelName The level to get the data from
+     * @return The ArrayDeque with the PlayerDataHolders containing the data
+     */
+    public static ArrayList<BackupHolder> getPlayerDataBackups(Player player, String levelName) {
+
+        File playerBackupsDirectory = makeLevelDirectory("backups/" + levelName + "/" + player.getUniqueId().toString());
+        ArrayList<BackupHolder> playerDataHolders = new ArrayList<>();
+        File[] playerLevelBackups = playerBackupsDirectory.listFiles();
+        DateFormat backupDateFormat = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss");
+
+        // Return an empty deque if there are no backups
+        if (playerLevelBackups == null) return playerDataHolders;
+
+        for (File file : playerLevelBackups) {
+            // Get the playerdata and the date
+            PlayerDataHolder playerdata = new PlayerDataHolder((HashMap<String, Object>) FileUtils.readJson(file.getPath()));
+            Date saveDate = FileUtils.tryParseDate(backupDateFormat, file.getName());
+
+            // Add the playerdata to the ArrayList if the date is valid
+            if (saveDate == null) continue;
+            playerDataHolders.add(new BackupHolder(playerdata, saveDate));
+        }
+
+        Collections.reverse(playerDataHolders);
+        return playerDataHolders;
+    }
+
+    /**
+     * Tries to parse the date from the filename of a backup file. If it fails, it returns null.
+     * @param format The format of the date to parse
+     * @param date The date to parse
+     * @return The parsed date, or null if it failed
+     */
+    private static Date tryParseDate(DateFormat format, String date) {
+
+        try {
+            return format.parse(date);
+        } catch (ParseException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Formats the target date into the predetermined format of "Month day, year at hour:minute:second".
+     * @param targetDate The date to format
+     * @return The formatted date
+     */
+    public static String formatToReadable(Date targetDate) {
+
+        DateFormat dateFormat = new SimpleDateFormat("LLLL dd, yyyy");
+        DateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
+        String date = dateFormat.format(targetDate);
+        String time = timeFormat.format(targetDate);
+        return date + " at " + time;
+    }
+
+    /**
      * Returns a list of all the directories  names inside the plugin dimension list, which
      * match every managed world.
      * @return All the managed worlds
@@ -175,7 +240,7 @@ public class FileUtils {
         if (levelListDirectories == null) return managedWorlds;
 
         for (File levelListDirectory : levelListDirectories) {
-            if (levelListDirectory.isDirectory()) {
+            if (levelListDirectory.isDirectory() && !levelListDirectory.getName().equals("backups")) {
                 managedWorlds.add(levelListDirectory.getName());
             }
         }
@@ -220,10 +285,7 @@ public class FileUtils {
             return parser.parse(file).getAsJsonObject().entrySet().stream().collect(
                     Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-        } catch (IOException e) {
-            AOSPlayerManager.LOGGER.warning("Failed to read JSON from file " + filepath);
-            e.printStackTrace();
-        }
+        } catch (IOException ignored) {}
 
         return new HashMap<>();
     }

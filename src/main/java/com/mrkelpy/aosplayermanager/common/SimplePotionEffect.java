@@ -58,5 +58,10 @@ public class SimplePotionEffect implements ConfigurationSerializable {
         map.put("amplifier", this.amplifier);
         return map;
     }
+
+    @Override
+    public String toString() {
+        return this.type;
+    }
 }
 

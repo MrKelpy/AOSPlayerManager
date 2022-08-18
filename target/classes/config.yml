@@ -10,7 +10,11 @@ worlds:
     - example-world3
     - example-world4
 
+general:
+
+  # Configured whether the plugin should execute a global data save
+  global-save: false
+
   # Configures the interval between global data saves. (Lower bound shadow-set to 1 minute)
   global-save-tick-interval: 6000
-
 

@@ -79,6 +79,7 @@ public class EventUtils {
         Inventory inventory = player.getInventory();
         ItemStack[] armour = player.getInventory().getArmorContents();
 
+        // Delete the inventory from the save if keepinventory is disabled
         if (!Boolean.getBoolean(player.getWorld().getGameRuleValue("keepInventory"))) {
             inventory = Bukkit.createInventory(player, InventoryType.PLAYER);
             armour = new ItemStack[4];

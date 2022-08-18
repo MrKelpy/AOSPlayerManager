@@ -15,12 +15,12 @@
                 <version>3.3.0</version>
                 <configuration>
                     <minimizeJar>true</minimizeJar>
-                    <relocations>
+                    <!--relocations>
                         <relocation>
                             <pattern>com.google.gson</pattern>
                             <shadedPattern>com.mrkelpy.aosplayermanager</shadedPattern>
                         </relocation>
-                    </relocations>
+                    </relocations-->
                 </configuration>
                 <executions>
                     <execution>

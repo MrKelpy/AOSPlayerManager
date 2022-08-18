@@ -33,7 +33,7 @@ public class GlobalPeriodicDataSavingEvent extends BukkitRunnable {
     @SuppressWarnings("UnusedReturnValue")
     public BukkitTask runTaskTimer(Plugin plugin) throws IllegalArgumentException, IllegalStateException {
 
-        long globalSavingDelay = AOSPlayerManagerConfig.getConfig().getInt("worlds.global-save-tick-interval");
+        long globalSavingDelay = AOSPlayerManagerConfig.getConfig().getInt("general.global-save-tick-interval");
         return super.runTaskTimer(plugin, 0, globalSavingDelay > 20*60 ? globalSavingDelay : 20*60L);
     }
 }

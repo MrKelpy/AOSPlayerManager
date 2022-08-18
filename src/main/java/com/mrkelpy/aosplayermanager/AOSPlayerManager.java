@@ -51,7 +51,10 @@ public class AOSPlayerManager extends JavaPlugin {
         LOGGER.info("AOSPlayerManager has been enabled!");
         this.getServer().getPluginManager().registerEvents(new onWorldChangedEvents(), this);
         this.getServer().getPluginManager().registerEvents(new PlayerDataSavingEvents(), this);
-        new GlobalPeriodicDataSavingEvent().runTaskTimer(this);
+
+        if (AOSPlayerManagerConfig.getConfig().getBoolean("general.global-save"))
+            new GlobalPeriodicDataSavingEvent().runTaskTimer(this);
+
         this.registerCommands();
     }
 
@@ -65,6 +68,7 @@ public class AOSPlayerManager extends JavaPlugin {
      */
     public void registerCommands() {
         getCommand("levellist").setExecutor(AOSPlayerManagerCommands.INSTANCE);
+        getCommand("checkdata").setExecutor(AOSPlayerManagerCommands.INSTANCE);
     }
 
 

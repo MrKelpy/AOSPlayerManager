@@ -8,3 +8,7 @@ commands:
   levellist:
     description: Displays a list of all the levels and level sets in the server.
     usage: /levellist
+
+  checkdata:
+    description: Opens a GUI to browse through the data for a player.
+    usage: /checkdata [target player]
