@@ -148,7 +148,7 @@ public abstract class PagedGUI implements Listener {
      * @return boolean
      */
     private boolean hasNextPage() {
-        return this.itemList.size() > (this.page * this.storageSlots) + 1;
+        return this.itemList.size() > (this.page) * (this.storageSlots + 1);
     }
 
     /**
