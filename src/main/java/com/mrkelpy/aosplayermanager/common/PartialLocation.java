@@ -53,6 +53,11 @@ public class PartialLocation implements Serializable {
         return new Location(world, this.x, this.y, this.z, this.yaw, this.pitch);
     }
 
+    @Override
+    public String toString() {
+        return String.format("x%s y%s z%s", this.x, this.y, this.z);
+    }
+
     /**
      * Creates a new HashMap from the current PartialLocation.
      * @return Serialized PartialLocation.

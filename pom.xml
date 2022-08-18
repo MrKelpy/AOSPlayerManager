@@ -6,7 +6,7 @@
 
     <groupId>com.mrkelpy</groupId>
     <artifactId>AOSPlayerManager</artifactId>
-    <version>1.1.0</version>
+    <version>1.2.1</version>
     <build>
         <plugins>
             <plugin>
@@ -15,12 +15,12 @@
                 <version>3.3.0</version>
                 <configuration>
                     <minimizeJar>true</minimizeJar>
-                    <!--relocations>
+                    <relocations>
                         <relocation>
                             <pattern>com.google.gson</pattern>
                             <shadedPattern>com.mrkelpy.aosplayermanager</shadedPattern>
                         </relocation>
-                    </relocations-->
+                    </relocations>
                 </configuration>
                 <executions>
                     <execution>

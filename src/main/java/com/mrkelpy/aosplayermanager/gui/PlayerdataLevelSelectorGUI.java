@@ -23,13 +23,15 @@ import java.util.List;
 public class PlayerdataLevelSelectorGUI extends PagedGUI {
 
     private final Player player;
+    private final Player sender;
 
     /**
      * Main constructor for the PlayerdataLevelSelectorGUI.
      */
-    public PlayerdataLevelSelectorGUI(Player player) {
+    public PlayerdataLevelSelectorGUI(Player player, Player sender) {
         super("Backups for " + player.getName(), 27);
         this.player = player;
+        this.sender = sender;
         this.setItems(this.makeItemWorldList());
         this.reload();
         this.registerListeners();
@@ -46,14 +48,14 @@ public class PlayerdataLevelSelectorGUI extends PagedGUI {
         if (event.getCurrentItem().getType() != Material.WOOL) return;
 
         // Get the world name from the clicked item's name and open a PlayerdataSelectorGUI from it.
-        new PlayerdataSelectorGUI(this.player, event.getCurrentItem().getItemMeta().getDisplayName().substring(4)).openInventory();
+        new PlayerdataSelectorGUI(this.player, this.sender, event.getCurrentItem().getItemMeta().getDisplayName().substring(4)).openInventory();
     }
 
     /**
      * Opens this inventory for the bound player.
      */
     public void openInventory() {
-        this.player.openInventory(this.inventory);
+        this.sender.openInventory(this.inventory);
     }
 
     /**
@@ -93,7 +95,7 @@ public class PlayerdataLevelSelectorGUI extends PagedGUI {
     @SuppressWarnings("deprecation")
     private ItemStack worldToBlock(String worldName, String codes) {
 
-        ArrayList<BackupHolder> worldBackups = FileUtils.getPlayerDataBackups(this.player, worldName);
+        ArrayList<BackupHolder> worldBackups = FileUtils.getPlayerDataBackups(this.player, worldName, 0, 0);
         String lastSaved = worldBackups.isEmpty() ? "Never" : FileUtils.formatToReadable(worldBackups.get(0).getSaveDate());
 
         return worldName.equals(this.player.getWorld().getName())

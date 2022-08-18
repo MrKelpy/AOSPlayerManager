@@ -12,10 +12,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Queue;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -219,6 +216,10 @@ public class PlayerDataHolder implements Serializable {
 
     public int getPlayerHunger() {
         return this.playerHunger;
+    }
+
+    public void setPlayerCoordinates(PartialLocation playerCoordinates) {
+        this.playerCoordinates = playerCoordinates;
     }
 }
 

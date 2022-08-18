@@ -168,12 +168,14 @@ public class FileUtils {
 
     /**
      * Accesses the backups folders for a player in a certain level and returns an ArrayList containing all the backups
-     * created in the form of a BackupHolder.
+     * created in the form of a BackupHolder. There's also a begin and end parameters that can be used to optimise the searches
      * @param player The player to get the data from
      * @param levelName The level to get the data from
-     * @return The ArrayDeque with the PlayerDataHolders containing the data
+     * @param begin The beginning of the range to get the backups from
+     * @param end The end of the range to get the backups from
+     * @return The ArrayList with the BackupHolders containing the data
      */
-    public static ArrayList<BackupHolder> getPlayerDataBackups(Player player, String levelName) {
+    public static ArrayList<BackupHolder> getPlayerDataBackups(Player player, String levelName, int begin, int end) {
 
         File playerBackupsDirectory = makeLevelDirectory("backups/" + levelName + "/" + player.getUniqueId().toString());
         ArrayList<BackupHolder> playerDataHolders = new ArrayList<>();
@@ -181,10 +183,19 @@ public class FileUtils {
         DateFormat backupDateFormat = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss");
 
         // Return an empty deque if there are no backups
-        if (playerLevelBackups == null) return playerDataHolders;
+        if (playerLevelBackups == null || playerLevelBackups.length <= 0) return playerDataHolders;
+        Arrays.sort(playerLevelBackups);
+        Collections.reverse(Arrays.asList(playerLevelBackups));
 
-        for (File file : playerLevelBackups) {
-            // Get the playerdata and the date
+        if (end == -1) end = playerLevelBackups.length - 1;
+
+        for (int i = begin; i <= end; i++) {
+
+            // Stops the loop if the end of the list is reached.
+            if (playerLevelBackups.length <= i) break;
+
+            // Get the playerdata and the date from the file
+            File file = playerLevelBackups[i];
             PlayerDataHolder playerdata = new PlayerDataHolder((HashMap<String, Object>) FileUtils.readJson(file.getPath()));
             Date saveDate = FileUtils.tryParseDate(backupDateFormat, file.getName());
 
@@ -193,8 +204,18 @@ public class FileUtils {
             playerDataHolders.add(new BackupHolder(playerdata, saveDate));
         }
 
-        Collections.reverse(playerDataHolders);
         return playerDataHolders;
+    }
+
+    /**
+     * Shortcut for {@link FileUtils#getPlayerDataBackups(Player, String, int, int)} with the begin and end parameters set to 0 and -1,
+     * telling the method to get all the backups.
+     * @param player The player to get the data from
+     * @param levelName The level to get the data from
+     * @return The ArrayList with the BackupHolders containing the data
+     */
+    public static ArrayList<BackupHolder> getPlayerDataBackups(Player player, String levelName) {
+        return getPlayerDataBackups(player, levelName, 0, -1);
     }
 
     /**

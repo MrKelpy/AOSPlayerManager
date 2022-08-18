@@ -2,12 +2,14 @@ package com.mrkelpy.aosplayermanager.events;
 
 import com.mrkelpy.aosplayermanager.configuration.LevelSetConfiguration;
 import com.mrkelpy.aosplayermanager.gui.PlayerdataLevelSelectorGUI;
+import com.mrkelpy.aosplayermanager.util.EventUtils;
 import com.mrkelpy.aosplayermanager.util.FileUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.event.world.WorldSaveEvent;
 
 import java.util.ArrayList;
 import java.util.Objects;
@@ -27,11 +29,20 @@ public class AOSPlayerManagerCommands implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender commandSender, Command command, String s, String[] args) {
 
-        if (command.getName().equalsIgnoreCase("levellist"))
+        if (command.getName().equalsIgnoreCase("levellist")) {
+            if (!this.checkPermission("aos.levellist", commandSender)) return true;
             return levelListCommand(commandSender);
+        }
 
-        if (command.getName().equalsIgnoreCase("checkdata"))
+        if (command.getName().equalsIgnoreCase("checkdata")) {
+            if (!this.checkPermission("aos.checkdata", commandSender)) return true;
             return checkDataCommand(commandSender, args);
+        }
+
+        if (command.getName().equalsIgnoreCase("savedata")) {
+            if (!this.checkPermission("aos.savedata", commandSender)) return true;
+            return saveDataCommand(commandSender, args);
+        }
 
         return true;
     }
@@ -47,23 +58,20 @@ public class AOSPlayerManagerCommands implements CommandExecutor {
 
         ArrayList<String> managedWorlds = FileUtils.getManagedWorlds();
         ArrayList<ArrayList<String>> levelSets = LevelSetConfiguration.getLevelSets();
-        StringBuilder finalMessage = new StringBuilder();
+        commandSender.sendMessage(String.format("§f----- §aManaged Worlds (%s) §f-----", FileUtils.getManagedWorlds().size()));
 
-        // Formats every LevelSet into a string and adds it to the final message
+        // Sends every separate level set to the player as a string
         for (int i = 0; i < levelSets.size(); i++) {
 
-            if (i != 0) finalMessage.append(", ");
-            finalMessage.append("Set").append(i).append("(").append(String.join(", ", levelSets.get(i))).append(")");
+            commandSender.sendMessage("§b> " + "§eSet " + i + " -> §f" + String.join(", ", levelSets.get(i)));
             levelSets.get(i).forEach(managedWorlds::remove);
         }
 
-        // Adds the rest of the unsynced worlds to the final message, if there's any more.
-        if (managedWorlds.size() != 0 && levelSets.size() != 0)
-            finalMessage.append(", ");
+        // Sends the rest of the managed worlds to the player as a string if there's any
+        for (String managedWorld : managedWorlds) {
+            commandSender.sendMessage("§b> §f" + managedWorld);
+        }
 
-        finalMessage.append(String.join(", ", managedWorlds));
-        commandSender.sendMessage(String.format("§f----- §aManaged Worlds (%s) §f-----", FileUtils.getManagedWorlds().size()));
-        commandSender.sendMessage(finalMessage.toString());
         return true;
     }
 
@@ -73,6 +81,7 @@ public class AOSPlayerManagerCommands implements CommandExecutor {
      * @param args The arguments of the command
      * @return Boolean, feedback to the caller
      */
+    @SuppressWarnings("deprecation")
     private boolean checkDataCommand(CommandSender commandSender, String[] args) {
 
         // Ensure that this command can only be used by a player.
@@ -91,10 +100,51 @@ public class AOSPlayerManagerCommands implements CommandExecutor {
             return true;
         }
 
-        // PlayerDataHolder latestData = FileUtils.getPlayerData(playerSender, playerSender.getWorld().getName());
-        new PlayerdataLevelSelectorGUI(playerSender).openInventory();
+        Player target = Bukkit.getPlayer(args[0]);
+        new PlayerdataLevelSelectorGUI(target, playerSender).openInventory();
 
         return true;
+    }
+
+    private boolean saveDataCommand(CommandSender commandSender, String[] args) {
+
+        // Ensure that this command can only be used by a player.
+        if (!(commandSender instanceof Player)) return false;
+        Player playerSender = (Player) commandSender;
+
+        if (args.length == 0) {
+            Bukkit.getPluginManager().callEvent(new WorldSaveEvent(playerSender.getWorld()));
+            commandSender.sendMessage("§aSaved data for all players");
+            return true;
+        }
+
+        // Checks if the player specified in the arguments is online.
+        if (Bukkit.getServer().getOnlinePlayers().stream().noneMatch(player -> Objects.equals(player.getName(), args[0]))) {
+            commandSender.sendMessage("§cThat player cannot be found");
+            return true;
+        }
+
+        EventUtils.eventPlayerdataSave(playerSender, playerSender.getWorld().getName());
+        EventUtils.eventPlayerdataBackup(playerSender, playerSender.getWorld().getName());
+        commandSender.sendMessage("§aSaved data for " + args[0] + "");
+        return true;
+
+    }
+
+    /**
+     * Checks if a player has permission to use a command. If not, send a message to the player telling
+     * them they do not have permission.
+     * @param permission The permission to check for
+     * @param sender The sender to check for the permission
+     * @return Whether the player has permission or not
+     */
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
+    private boolean checkPermission(String permission, CommandSender sender) {
+        if (sender.hasPermission("aos.all") || sender.isOp() || sender.hasPermission(permission))
+            return true;
+
+        sender.sendMessage("§cYou do not have permission to use this command");
+        return false;
     }
 
 }

@@ -25,7 +25,7 @@ public abstract class PagedGUI implements Listener {
 
     // This inventory instance should be used by any classes inheriting from the class.
     protected final Inventory inventory;
-    private final int storageSlots;
+    protected final int storageSlots;
     private List<ItemStack> itemList;
     private int page;
 
@@ -83,6 +83,7 @@ public abstract class PagedGUI implements Listener {
 
         if (event.getSlot() == this.storageSlots + 9) this.sendToPage(this.page + 1);
         if (event.getSlot() == this.storageSlots + 1) this.sendToPage(this.page - 1);
+        if (event.getSlot() == this.storageSlots + 5) this.goBack();
     }
 
     /**
@@ -100,7 +101,7 @@ public abstract class PagedGUI implements Listener {
      */
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
-        if (event.getInventory() == this.inventory)
+        if (event.getInventory().equals(this.inventory))
             HandlerList.unregisterAll(this);
     }
 
@@ -108,12 +109,12 @@ public abstract class PagedGUI implements Listener {
      * This method sends a GUI to a specific page in the PagedGUI.
      * @param page The page to send the GUI to.
      */
-    private void sendToPage(int page) {
+    protected void sendToPage(int page) {
 
         if (page <= 0) return; // Paging starts at 1.
 
         // These indexes represent the first and last items' location from inside the GUI page to the itemlist.
-        int firstItemIndex = (page-1) * this.storageSlots;  // There's a slight offset equal to the page for the first index per page, so fix it.
+        int firstItemIndex = (page - 1) * (this.storageSlots + 1);  // There's a slight offset equal to the page for the first index per page, so fix it.
         int lastItemIndex = firstItemIndex + this.storageSlots;
 
         // Ignores the sendToPage call if list of items doesn't account for this many pages.
@@ -127,6 +128,12 @@ public abstract class PagedGUI implements Listener {
         this.setPageItems(itemsForPage);
         this.setPagingButtons();
     }
+
+    /**
+     * This method is meant to be overrided by any class that extends PagedGUI, and meant
+     * to be used when the "go back" button is pressed, opening up the previous GUI.
+     */
+    protected void goBack() {}
 
     /**
      * Evaluates whether there is a previous page in the GUI or not.
@@ -156,11 +163,14 @@ public abstract class PagedGUI implements Listener {
     @SuppressWarnings("deprecation")
     private void setPagingButtons() {
         this.inventory.setItem(this.storageSlots + 1,
-                createItemPlaceholder(Material.INK_SACK, "Previous Page", null,
+                createItemPlaceholder(Material.INK_SACK, "§bPrevious Page", null,
                         this.hasPreviousPage() ? DyeColor.PURPLE.getData() : DyeColor.SILVER.getData()));
 
+        this.inventory.setItem(this.storageSlots + 5,
+                createItemPlaceholder(Material.INK_SACK, "§bGo Back", null, DyeColor.RED.getData()));
+
         this.inventory.setItem(this.storageSlots + 9,
-                createItemPlaceholder(Material.INK_SACK, "Next Page", null,
+                createItemPlaceholder(Material.INK_SACK, "§bNext Page", null,
                         this.hasNextPage() ? DyeColor.PURPLE.getData() : DyeColor.SILVER.getData()));
     }
 

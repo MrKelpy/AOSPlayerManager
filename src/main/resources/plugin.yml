@@ -1,5 +1,5 @@
 name: AOSPlayerManager
-version: 1.1.0
+version: 1.2.1
 description: Tailor-Made plugin for the Age of Sauron Server, to manage player inventories and positions across worlds
 author: MrKelpy
 main: com.mrkelpy.aosplayermanager.AOSPlayerManager
@@ -12,3 +12,7 @@ commands:
   checkdata:
     description: Opens a GUI to browse through the data for a player.
     usage: /checkdata [target player]
+
+  savedata:
+    description: Saves the data for all players, or for a player, to memory.
+    usage: /savedata [(Optional) target player]
