@@ -5,6 +5,7 @@ import com.mrkelpy.aosplayermanager.common.BackupHolder;
 import com.mrkelpy.aosplayermanager.util.FileUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -20,16 +21,16 @@ import java.util.stream.Collectors;
  * This class creates a GUI meant to browse through one of the managed worlds, displaying
  * all the different playerdata backups, including the currently saved data. This GUI is player and world-bound.
  */
-public class PlayerdataSelectorGUI extends PagedGUI {
+public class PlayerdataSelectorGUI<T extends OfflinePlayer> extends PagedGUI {
 
-    private final Player player;
+    private final T player;
     private final Player sender;
     private final String levelName;
 
     /**
      * Main constructor for the PlayerdataSelectorGUI.
      */
-    public PlayerdataSelectorGUI(Player player, Player sender, String worldName) {
+    public PlayerdataSelectorGUI(T player, Player sender, String worldName) {
         super("Backups for " + player.getName(), 27);
         this.player = player;
         this.sender = sender;
@@ -51,20 +52,23 @@ public class PlayerdataSelectorGUI extends PagedGUI {
         // Gets the correct backup for the item clicked by comparing the backups' formatted saved date with the item's name
         // And opens the PlayerdataVisualizationGUI for the selected backup
         if (event.getCurrentItem().getType() == Material.PAPER) {
-            List<BackupHolder> backups = FileUtils.getPlayerDataBackups(this.player, this.levelName).stream()
+            int firstItemIndex = (this.getPage() - 1) * (this.storageSlots + 1);
+            int lastItemIndex = firstItemIndex + this.storageSlots;
+
+            List<BackupHolder> backups = FileUtils.getPlayerDataBackups(this.player, this.levelName, firstItemIndex, lastItemIndex).stream()
                     .filter(b -> FileUtils.formatToReadable(b.getSaveDate()).equals(event.getCurrentItem().getItemMeta().getDisplayName().substring(4)))
                     .collect(Collectors.toList());
 
             if (backups.isEmpty()) return;
 
-            new PlayerdataVisualizationGUI(this.player, this.sender, this.levelName, backups.get(0)).openInventory();
+            new PlayerdataVisualizationGUI<>(this.player, this.sender, this.levelName, backups.get(0)).openInventory();
             return;
         }
 
         // Creates a BackupHolder for the currently saved playerdata and opens the PlayerdataVisualizationGUI for it
         if (event.getCurrentItem().getType() == Material.WRITTEN_BOOK) {
             BackupHolder backup = new BackupHolder(FileUtils.getPlayerData(this.player, this.levelName), null);
-            new PlayerdataVisualizationGUI(this.player, this.sender, this.levelName, backup).openInventory();
+            new PlayerdataVisualizationGUI<>(this.player, this.sender, this.levelName, backup).openInventory();
         }
     }
 
@@ -80,7 +84,7 @@ public class PlayerdataSelectorGUI extends PagedGUI {
      */
     @Override
     protected void goBack() {
-        new PlayerdataLevelSelectorGUI(this.player, this.sender).openInventory();
+        new PlayerdataLevelSelectorGUI<>(this.player, this.sender).openInventory();
     }
 
     @Override

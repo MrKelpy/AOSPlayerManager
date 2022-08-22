@@ -67,9 +67,8 @@ public class AOSPlayerManager extends JavaPlugin {
      * Registers all the commands for the plugin.
      */
     public void registerCommands() {
-        getCommand("levellist").setExecutor(AOSPlayerManagerCommands.INSTANCE);
-        getCommand("checkdata").setExecutor(AOSPlayerManagerCommands.INSTANCE);
-        getCommand("savedata").setExecutor(AOSPlayerManagerCommands.INSTANCE);
+        getCommand("apm").setExecutor(AOSPlayerManagerCommands.INSTANCE);
+
     }
 
 

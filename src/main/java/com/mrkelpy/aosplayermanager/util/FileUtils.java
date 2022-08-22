@@ -5,6 +5,7 @@ import com.mrkelpy.aosplayermanager.AOSPlayerManager;
 import com.mrkelpy.aosplayermanager.common.BackupHolder;
 import com.mrkelpy.aosplayermanager.common.PartialLocation;
 import com.mrkelpy.aosplayermanager.common.PlayerDataHolder;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -159,7 +160,7 @@ public class FileUtils {
      * @param levelName The level to get the data from
      * @return The PlayerDataHolder instance containing the data
      */
-    public static PlayerDataHolder getPlayerData(Player player, String levelName) {
+    public static PlayerDataHolder getPlayerData(OfflinePlayer player, String levelName) {
 
         File playerdataFile = new File(makeLevelDirectory(levelName), player.getUniqueId().toString() + ".json");
         HashMap<String, Object> playerData = (HashMap<String, Object>) FileUtils.readJson(playerdataFile.getPath());
@@ -175,7 +176,7 @@ public class FileUtils {
      * @param end The end of the range to get the backups from
      * @return The ArrayList with the BackupHolders containing the data
      */
-    public static ArrayList<BackupHolder> getPlayerDataBackups(Player player, String levelName, int begin, int end) {
+    public static ArrayList<BackupHolder> getPlayerDataBackups(OfflinePlayer player, String levelName, int begin, int end) {
 
         File playerBackupsDirectory = makeLevelDirectory("backups/" + levelName + "/" + player.getUniqueId().toString());
         ArrayList<BackupHolder> playerDataHolders = new ArrayList<>();
@@ -208,13 +209,13 @@ public class FileUtils {
     }
 
     /**
-     * Shortcut for {@link FileUtils#getPlayerDataBackups(Player, String, int, int)} with the begin and end parameters set to 0 and -1,
+     * Shortcut for {@link FileUtils#getPlayerDataBackups(OfflinePlayer, String, int, int)} with the begin and end parameters set to 0 and -1,
      * telling the method to get all the backups.
      * @param player The player to get the data from
      * @param levelName The level to get the data from
      * @return The ArrayList with the BackupHolders containing the data
      */
-    public static ArrayList<BackupHolder> getPlayerDataBackups(Player player, String levelName) {
+    public static ArrayList<BackupHolder> getPlayerDataBackups(OfflinePlayer player, String levelName) {
         return getPlayerDataBackups(player, levelName, 0, -1);
     }
 

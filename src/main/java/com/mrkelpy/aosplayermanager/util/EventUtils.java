@@ -1,16 +1,19 @@
 package com.mrkelpy.aosplayermanager.util;
 
+import com.mrkelpy.aosplayermanager.common.PartialLocation;
 import com.mrkelpy.aosplayermanager.configuration.AOSPlayerManagerConfig;
 import com.mrkelpy.aosplayermanager.configuration.LevelSetConfiguration;
-import com.mrkelpy.aosplayermanager.common.PartialLocation;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class EventUtils {
@@ -79,9 +82,19 @@ public class EventUtils {
         Inventory inventory = player.getInventory();
         ItemStack[] armour = player.getInventory().getArmorContents();
 
-        // Delete the inventory from the save if keepinventory is disabled
-        if (!Boolean.getBoolean(player.getWorld().getGameRuleValue("keepInventory"))) {
-            inventory = Bukkit.createInventory(player, InventoryType.PLAYER);
+        // If the keepInventory gamerule is set to true, but there's a forced no keepinv, the items won't been dropped, so
+        // we need to drop them manually. This is an edge case that I don't think has a better fix.
+        if (Boolean.parseBoolean(player.getWorld().getGameRuleValue("keepInventory")) && AOSPlayerManagerConfig.getConfig().getList("worlds.no-keepinventory").contains(levelName)) {
+            Arrays.stream(inventory.getContents()).filter(Objects::nonNull).filter(i -> i.getType() != Material.AIR).forEach(i -> player.getWorld().dropItemNaturally(player.getLocation(), i));
+            Arrays.stream(armour).filter(Objects::nonNull).filter(i -> i.getType() != Material.AIR).forEach(item -> player.getWorld().dropItemNaturally(player.getLocation(), item));
+        }
+
+        // Delete the inventory from the player if keepinventory is disabled or force disabled, and update the inventory and armour.
+        if (!Boolean.parseBoolean(player.getWorld().getGameRuleValue("keepInventory")) || AOSPlayerManagerConfig.getConfig().getList("worlds.no-keepinventory").contains(levelName)) {
+            player.getInventory().setContents(Bukkit.createInventory(null, InventoryType.PLAYER).getContents());
+            player.getInventory().setArmorContents(new ItemStack[4]);
+
+            inventory = Bukkit.createInventory(null, InventoryType.PLAYER);
             armour = new ItemStack[4];
         }
 

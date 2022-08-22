@@ -1,5 +1,7 @@
 package com.mrkelpy.aosplayermanager.events;
 
+import com.mrkelpy.aosplayermanager.AOSPlayerManager;
+import com.mrkelpy.aosplayermanager.configuration.AOSPlayerManagerConfig;
 import com.mrkelpy.aosplayermanager.configuration.LevelSetConfiguration;
 import com.mrkelpy.aosplayermanager.gui.PlayerdataLevelSelectorGUI;
 import com.mrkelpy.aosplayermanager.util.EventUtils;
@@ -11,8 +13,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.world.WorldSaveEvent;
 
-import java.util.ArrayList;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * This class handles all the custom commands added by the plugin
@@ -29,21 +30,26 @@ public class AOSPlayerManagerCommands implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender commandSender, Command command, String s, String[] args) {
 
-        if (command.getName().equalsIgnoreCase("levellist")) {
-            if (!this.checkPermission("aos.levellist", commandSender)) return true;
-            return levelListCommand(commandSender);
+        if (command.getName().equalsIgnoreCase("apm")) {
+            return parseCommands(commandSender, args);
         }
 
-        if (command.getName().equalsIgnoreCase("checkdata")) {
-            if (!this.checkPermission("aos.checkdata", commandSender)) return true;
-            return checkDataCommand(commandSender, args);
-        }
+        return true;
+    }
 
-        if (command.getName().equalsIgnoreCase("savedata")) {
-            if (!this.checkPermission("aos.savedata", commandSender)) return true;
-            return saveDataCommand(commandSender, args);
-        }
+    /**
+     * Displays a list of available command for usage.
+     * @param commandSender The sender of the command
+     * @return Boolean, feedback to the caller
+     */
+    private boolean helpCommand(CommandSender commandSender) {
 
+        commandSender.sendMessage(String.format("§f----- §a%s Command List§f-----", AOSPlayerManager.PLUGIN_NAME));
+        commandSender.sendMessage("§b> §f/apm levellist §7-> Displays a list of all managed levels in the server.");
+        commandSender.sendMessage("§b> §f/apm savedata [(Optional) target player] §7-> Saves the playerdata for a player or all players if unspecified.");
+        commandSender.sendMessage("§b> §f/apm checkdata [target player] §7-> Checks the playerdata for a player, allowing the operator to restore or clone it.");
+        commandSender.sendMessage("§b> §f/apm reload §7-> Reloads the plugin.");
+        commandSender.sendMessage("§b> §f/apm help §7-> Displays this menu.");
         return true;
     }
 
@@ -71,7 +77,6 @@ public class AOSPlayerManagerCommands implements CommandExecutor {
         for (String managedWorld : managedWorlds) {
             commandSender.sendMessage("§b> §f" + managedWorld);
         }
-
         return true;
     }
 
@@ -94,18 +99,24 @@ public class AOSPlayerManagerCommands implements CommandExecutor {
             return true;
         }
 
-        // Checks if the player specified in the arguments is online.
-        if (Bukkit.getServer().getOnlinePlayers().stream().noneMatch(player -> Objects.equals(player.getName(), args[0]))) {
+        // Checks if the player specified in the arguments is online or has ever played on the server.
+        if (Bukkit.getServer().getOnlinePlayers().stream().noneMatch(player -> Objects.equals(player.getName(), args[0])) && !Bukkit.getOfflinePlayer(args[0]).hasPlayedBefore()) {
             commandSender.sendMessage("§cThat player cannot be found");
             return true;
         }
 
-        Player target = Bukkit.getPlayer(args[0]);
-        new PlayerdataLevelSelectorGUI(target, playerSender).openInventory();
+        new PlayerdataLevelSelectorGUI<>(Bukkit.getPlayer(args[0]) != null ? Bukkit.getPlayer(args[0]) : Bukkit.getOfflinePlayer(args[0]), playerSender)
+                .openInventory();
 
         return true;
     }
 
+    /**
+     * Saves the data for a player if specified, otherwise, save the data for all players.
+     * @param commandSender The sender of the command
+     * @param args The command arguments
+     * @return Boolean, feedback to the caller
+     */
     private boolean saveDataCommand(CommandSender commandSender, String[] args) {
 
         // Ensure that this command can only be used by a player.
@@ -132,6 +143,20 @@ public class AOSPlayerManagerCommands implements CommandExecutor {
     }
 
     /**
+     * Reloads the plugin configs and saves the players' data.
+     * @param commandSender The sender of the command
+     * @return Boolean, feedback to the caller
+     */
+    private boolean reloadCommand(CommandSender commandSender) {
+
+        saveDataCommand(commandSender, new String[]{});
+        AOSPlayerManagerConfig.reload();
+        LevelSetConfiguration.reload();
+        commandSender.sendMessage("§eReloaded " + AOSPlayerManager.PLUGIN_NAME);
+        return true;
+    }
+
+    /**
      * Checks if a player has permission to use a command. If not, send a message to the player telling
      * them they do not have permission.
      * @param permission The permission to check for
@@ -146,6 +171,57 @@ public class AOSPlayerManagerCommands implements CommandExecutor {
         sender.sendMessage("§cYou do not have permission to use this command");
         return false;
     }
+
+    /**
+     * Since the base command is /apm, this method takes in the first argument after that prefix and parses the command
+     * normally from there. This serves to prevent the command from being used by other plugins, and to have a "command space"
+     * for the plugin.
+     * The "args" array will also be modified, removing the first element, because that's the command to be called.
+     * @param commandSender The sender of the command
+     * @param args The arguments of the command
+     * @return Boolean, feedback to the caller
+     */
+    private boolean parseCommands(CommandSender commandSender, String[] args) {
+
+        // Using just /apm shows the help menu
+        if (args.length == 0) return helpCommand(commandSender);
+
+        // Process the arguments and remove the first element
+        String command = args[0];
+        List<String> argumentProcessing = new LinkedList<>(Arrays.asList(args));
+        argumentProcessing.remove(0);
+        args = Arrays.copyOf(argumentProcessing.toArray(), args.length - 1, String[].class);
+
+        // Check which command was meant to be fired given the command argument, and fire it
+        if (command.equalsIgnoreCase("levellist")) {
+            if (!this.checkPermission("aos.levellist", commandSender)) return true;
+            return levelListCommand(commandSender);
+        }
+
+        if (command.equalsIgnoreCase("checkdata")) {
+            if (!this.checkPermission("aos.checkdata", commandSender)) return true;
+            return checkDataCommand(commandSender, args);
+        }
+
+        if (command.equalsIgnoreCase("savedata")) {
+            if (!this.checkPermission("aos.savedata", commandSender)) return true;
+            return saveDataCommand(commandSender, args);
+        }
+
+        if (command.equalsIgnoreCase("help")) {
+            if (!this.checkPermission("aos.help", commandSender)) return true;
+            return helpCommand(commandSender);
+        }
+
+        if (command.equalsIgnoreCase("reload")) {
+            if (!this.checkPermission("aos.reload", commandSender)) return true;
+            return reloadCommand(commandSender);
+        }
+
+        commandSender.sendMessage("§cUnknown command. Use /apm help for a list of available commands");
+        return true;
+
+}
 
 }
 

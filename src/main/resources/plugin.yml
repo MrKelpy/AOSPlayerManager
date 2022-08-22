@@ -1,18 +1,30 @@
 name: AOSPlayerManager
-version: 1.2.2
+version: 1.2.7
 description: Tailor-Made plugin for the Age of Sauron Server, to manage player inventories and positions across worlds
 author: MrKelpy
 main: com.mrkelpy.aosplayermanager.AOSPlayerManager
 
 commands:
-  levellist:
+  apm:
+    description: Master command. When used alone, brings up the help menu.
+    usage: /apm <command> [args]
+
+  apm levellist:
     description: Displays a list of all the levels and level sets in the server.
-    usage: /levellist
+    usage: /apm levellist
 
-  checkdata:
+  apm checkdata:
     description: Opens a GUI to browse through the data for a player.
-    usage: /checkdata [target player]
+    usage: /apm checkdata [target player]
 
-  savedata:
+  apm savedata:
     description: Saves the data for all players, or for a player, to memory.
-    usage: /savedata [(Optional) target player]
+    usage: /apm savedata [(Optional) target player]
+
+  apm reload:
+    description: Reloads the plugin.
+    usage: /apm reload
+
+  apm help:
+    description: Displays the help menu.
+    usage: /apm help

@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 public class LevelSetConfiguration {
 
     public static final File LEVEL_SET_FILE = new File(AOSPlayerManager.DataFolder, "LevelSetConfigs.json");
-    private static final ArrayList<ArrayList<String>> LEVEL_SETS = readLevelSetConfig();
+    private static ArrayList<ArrayList<String>> LEVEL_SETS = readLevelSetConfig();
 
     public LevelSetConfiguration() {
         setup();
@@ -69,6 +69,13 @@ public class LevelSetConfiguration {
     }
 
     /**
+     * Reloads the LevelSetConfigs
+     */
+    public static void reload() {
+        LEVEL_SETS = readLevelSetConfig();
+    }
+
+    /**
      * Reads the JsonObject from the level set config file and returns a list of all the level sets.
      * @return The map containing the json data.
      */
@@ -89,4 +96,5 @@ public class LevelSetConfiguration {
 
         return new ArrayList<>();
     }
+
 }

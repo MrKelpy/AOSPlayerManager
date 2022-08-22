@@ -6,6 +6,8 @@ import com.mrkelpy.aosplayermanager.util.FileUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.DyeColor;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.craftbukkit.v1_7_R4.CraftOfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -20,15 +22,15 @@ import java.util.List;
  * This class creates a GUI meant to browse through AOSPlayerManager's managed worlds, aiming
  * to check for playerbound data in the folders that are created for each world.
  */
-public class PlayerdataLevelSelectorGUI extends PagedGUI {
+public class PlayerdataLevelSelectorGUI<T extends OfflinePlayer> extends PagedGUI {
 
-    private final Player player;
+    private final T player;
     private final Player sender;
 
     /**
      * Main constructor for the PlayerdataLevelSelectorGUI.
      */
-    public PlayerdataLevelSelectorGUI(Player player, Player sender) {
+    public PlayerdataLevelSelectorGUI(T player, Player sender) {
         super("Backups for " + player.getName(), 27);
         this.player = player;
         this.sender = sender;
@@ -48,7 +50,7 @@ public class PlayerdataLevelSelectorGUI extends PagedGUI {
         if (event.getCurrentItem().getType() != Material.WOOL) return;
 
         // Get the world name from the clicked item's name and open a PlayerdataSelectorGUI from it.
-        new PlayerdataSelectorGUI(this.player, this.sender, event.getCurrentItem().getItemMeta().getDisplayName().substring(4)).openInventory();
+        new PlayerdataSelectorGUI<>(this.player, this.sender, event.getCurrentItem().getItemMeta().getDisplayName().substring(4)).openInventory();
     }
 
     /**
@@ -98,7 +100,10 @@ public class PlayerdataLevelSelectorGUI extends PagedGUI {
         ArrayList<BackupHolder> worldBackups = FileUtils.getPlayerDataBackups(this.player, worldName, 0, 0);
         String lastSaved = worldBackups.isEmpty() ? "Never" : FileUtils.formatToReadable(worldBackups.get(0).getSaveDate());
 
-        return worldName.equals(this.player.getWorld().getName())
+        if ((this.player instanceof CraftOfflinePlayer)) return PagedGUI.createItemPlaceholder(Material.WOOL, codes + worldName,
+                Collections.singletonList("§8Last saved: " + lastSaved), DyeColor.WHITE.getData());
+
+        return worldName.equals(this.player.getPlayer().getWorld().getName())
                 ? PagedGUI.createItemPlaceholder(Material.WOOL, codes + worldName, Collections.singletonList("§eActive"), DyeColor.LIME.getData())
                 : PagedGUI.createItemPlaceholder(Material.WOOL, codes + worldName,
                 Collections.singletonList("§8Last saved: " + lastSaved), DyeColor.WHITE.getData());

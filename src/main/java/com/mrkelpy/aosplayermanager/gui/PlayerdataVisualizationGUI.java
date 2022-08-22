@@ -8,6 +8,7 @@ import com.mrkelpy.aosplayermanager.util.EventUtils;
 import com.mrkelpy.aosplayermanager.util.FileUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -26,9 +27,9 @@ import java.util.stream.Collectors;
  * <br>
  * This GUI is player, world, and playerdata-bound.
  */
-public class PlayerdataVisualizationGUI extends PagedGUI {
+public class PlayerdataVisualizationGUI<T extends OfflinePlayer> extends PagedGUI {
 
-    private final Player player;
+    private final T player;
     private final Player sender;
     private final String levelName;
     private final BackupHolder playerdata;
@@ -36,7 +37,7 @@ public class PlayerdataVisualizationGUI extends PagedGUI {
     /**
      * Main constructor for the PlayerdataVisualizationGUI.
      */
-    public PlayerdataVisualizationGUI(Player player, Player sender, String worldName, BackupHolder playerdata) {
+    public PlayerdataVisualizationGUI(T player, Player sender, String worldName, BackupHolder playerdata) {
         super(playerdata.getSaveDate() != null ? FileUtils.formatToReadable(playerdata.getSaveDate()) : "Current Data", 45);
         this.player = player;
         this.sender = sender;
@@ -58,7 +59,7 @@ public class PlayerdataVisualizationGUI extends PagedGUI {
 
         // If the restore button is clicked, clone the data for the player.
         if (event.getCurrentItem().getType() == Material.REDSTONE_COMPARATOR)
-            this.cloneInstance(this.player);
+            this.cloneInstance((Player) this.player);
 
         // If the clone button is clicked, clone the data for the sender.
         if (event.getCurrentItem().getType() == Material.REDSTONE_TORCH_ON)
@@ -77,7 +78,7 @@ public class PlayerdataVisualizationGUI extends PagedGUI {
      */
     @Override
     protected void goBack() {
-        new PlayerdataSelectorGUI(this.player, this.sender, this.levelName).openInventory();
+        new PlayerdataSelectorGUI<>(this.player, this.sender, this.levelName).openInventory();
     }
 
     /**
@@ -111,6 +112,12 @@ public class PlayerdataVisualizationGUI extends PagedGUI {
         items.add(PagedGUI.createItemPlaceholder(Material.REDSTONE_TORCH_ON, "§eClone",
                 Collections.singletonList("§a(Clones the instance to the operator, backing up their data first)"),
                 (short) 0));
+
+        // If the player is currently online, add the restore button.
+        if (!player.isOnline()) {
+            items.add(PagedGUI.createItemPlaceholder(Material.IRON_FENCE, "§cPlayer is Offline"));
+            return items;
+        }
 
         items.add(PagedGUI.createItemPlaceholder(Material.REDSTONE_COMPARATOR, "§eRestore",
                 Collections.singletonList("§a(Automatically creates a backup before restoring)"),

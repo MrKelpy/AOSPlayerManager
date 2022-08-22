@@ -10,6 +10,11 @@ worlds:
     - example-world3
     - example-world4
 
+  # Forces the keepinventory to be off in a world
+  no-keepinventory:
+    - example-world5
+    - example-world6
+
 general:
 
   # Configured whether the plugin should execute a global data save

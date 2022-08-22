@@ -34,6 +34,9 @@ public class AOSPlayerManagerConfig {
         if (!getConfig().contains("worlds.null-coordinates"))
             getConfig().set("worlds.null-coordinates", Arrays.asList("example-world3", "example-world4"));
 
+        if (!getConfig().contains("worlds.no-keepinventory"))
+            getConfig().set("worlds.no-keepinventory", Arrays.asList("example-world5", "example-world6"));
+
         if (!getConfig().contains("general.global-save"))
             getConfig().set("general.global-save-tick-interval", false);
 
@@ -48,6 +51,14 @@ public class AOSPlayerManagerConfig {
      */
     public static FileConfiguration getConfig() {
         return PLUGIN.getConfig();
+    }
+
+    /**
+     * Reloads the config
+     */
+    public static void reload() {
+        PLUGIN.saveDefaultConfig();
+        PLUGIN.reloadConfig();
     }
 }
 

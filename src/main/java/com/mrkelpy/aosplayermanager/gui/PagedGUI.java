@@ -136,6 +136,12 @@ public abstract class PagedGUI implements Listener {
     protected void goBack() {}
 
     /**
+     * @return The current page of the PagedGUI.
+     */
+    @Getter
+    protected int getPage() { return this.page; }
+
+    /**
      * Evaluates whether there is a previous page in the GUI or not.
      * @return boolean
      */
