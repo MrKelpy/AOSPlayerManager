@@ -6,6 +6,7 @@ import com.mrkelpy.aosplayermanager.common.PlayerDataHolder;
 import com.mrkelpy.aosplayermanager.common.SimplePotionEffect;
 import com.mrkelpy.aosplayermanager.util.EventUtils;
 import com.mrkelpy.aosplayermanager.util.FileUtils;
+import com.mrkelpy.aosplayermanager.util.GUIUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -96,7 +97,7 @@ public class PlayerdataVisualizationGUI<T extends OfflinePlayer> extends PagedGU
         Collections.addAll(items, data.getPlayerArmour());
         for (int i = 0; i < 2; i++) items.add(null);
 
-        items.add(PagedGUI.createItemPlaceholder(Material.SKULL_ITEM, "§a" + this.player.getName(),
+        items.add(GUIUtils.createItemPlaceholder(Material.SKULL_ITEM, "§a" + this.player.getName(),
                 Arrays.asList(
                         "§eWorld: §f" + this.levelName,
                         "§eCoordinates: §f" + (data.getPlayerCoordinates() != null ? data.getPlayerCoordinates().toString() : "Unsaved"),
@@ -109,17 +110,17 @@ public class PlayerdataVisualizationGUI<T extends OfflinePlayer> extends PagedGU
                         ),
                 (short) 3));
 
-        items.add(PagedGUI.createItemPlaceholder(Material.REDSTONE_TORCH_ON, "§eClone",
+        items.add(GUIUtils.createItemPlaceholder(Material.REDSTONE_TORCH_ON, "§eClone",
                 Collections.singletonList("§a(Clones the instance to the operator, backing up their data first)"),
                 (short) 0));
 
         // If the player is currently online, add the restore button.
         if (!player.isOnline()) {
-            items.add(PagedGUI.createItemPlaceholder(Material.IRON_FENCE, "§cPlayer is Offline"));
+            items.add(GUIUtils.createItemPlaceholder(Material.IRON_FENCE, "§cPlayer is Offline"));
             return items;
         }
 
-        items.add(PagedGUI.createItemPlaceholder(Material.REDSTONE_COMPARATOR, "§eRestore",
+        items.add(GUIUtils.createItemPlaceholder(Material.REDSTONE_COMPARATOR, "§eRestore",
                 Collections.singletonList("§a(Automatically creates a backup before restoring)"),
                 (short) 0));
 

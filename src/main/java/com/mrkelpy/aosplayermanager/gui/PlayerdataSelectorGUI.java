@@ -3,6 +3,7 @@ package com.mrkelpy.aosplayermanager.gui;
 import com.mrkelpy.aosplayermanager.AOSPlayerManager;
 import com.mrkelpy.aosplayermanager.common.BackupHolder;
 import com.mrkelpy.aosplayermanager.util.FileUtils;
+import com.mrkelpy.aosplayermanager.util.GUIUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -107,12 +108,12 @@ public class PlayerdataSelectorGUI<T extends OfflinePlayer> extends PagedGUI {
         ArrayList<ItemStack> playerdataButtons = new ArrayList<>();
 
         // Adds the separate, current data item to the first place of the list.
-        playerdataButtons.add(PagedGUI.createItemPlaceholder(Material.WRITTEN_BOOK, "§eCurrent Data",
+        playerdataButtons.add(GUIUtils.createItemPlaceholder(Material.WRITTEN_BOOK, "§eCurrent Data",
                 Collections.singletonList("§9Click to view the saved data for this instance."), (short) 0));
 
         // Adds the backups to the list
         for (BackupHolder backup : FileUtils.getPlayerDataBackups(this.player, this.levelName, 0, limit))
-            playerdataButtons.add(PagedGUI.createItemPlaceholder(Material.PAPER, "§e" + FileUtils.formatToReadable(backup.getSaveDate()),
+            playerdataButtons.add(GUIUtils.createItemPlaceholder(Material.PAPER, "§e" + FileUtils.formatToReadable(backup.getSaveDate()),
                     Collections.singletonList("§9Click to view the saved data for this instance."), (short) 0));
 
         return playerdataButtons;
@@ -134,7 +135,7 @@ public class PlayerdataSelectorGUI<T extends OfflinePlayer> extends PagedGUI {
             if (itemList.stream().anyMatch(i -> i.getItemMeta().getDisplayName().substring(4).equals(filename))) continue;
 
             // Add the backup item to the list
-            itemList.add(PagedGUI.createItemPlaceholder(Material.PAPER, "§e" + filename,
+            itemList.add(GUIUtils.createItemPlaceholder(Material.PAPER, "§e" + filename,
                     Collections.singletonList("§9Click to view the saved data for this instance."), (short) 0));
         }
 

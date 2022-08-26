@@ -3,6 +3,7 @@ package com.mrkelpy.aosplayermanager.gui;
 import com.mrkelpy.aosplayermanager.AOSPlayerManager;
 import com.mrkelpy.aosplayermanager.common.BackupHolder;
 import com.mrkelpy.aosplayermanager.util.FileUtils;
+import com.mrkelpy.aosplayermanager.util.GUIUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.DyeColor;
 import org.bukkit.Material;
@@ -61,6 +62,13 @@ public class PlayerdataLevelSelectorGUI<T extends OfflinePlayer> extends PagedGU
     }
 
     /**
+     * There's nothing to go back to so this method does nothing.
+     */
+    @Override
+    protected void goBack() {}
+
+
+    /**
      * Registers all event listeners used by an instance of this GUI.
      */
     private void registerListeners() {
@@ -100,12 +108,12 @@ public class PlayerdataLevelSelectorGUI<T extends OfflinePlayer> extends PagedGU
         ArrayList<BackupHolder> worldBackups = FileUtils.getPlayerDataBackups(this.player, worldName, 0, 0);
         String lastSaved = worldBackups.isEmpty() ? "Never" : FileUtils.formatToReadable(worldBackups.get(0).getSaveDate());
 
-        if ((this.player instanceof CraftOfflinePlayer)) return PagedGUI.createItemPlaceholder(Material.WOOL, codes + worldName,
+        if ((this.player instanceof CraftOfflinePlayer)) return GUIUtils.createItemPlaceholder(Material.WOOL, codes + worldName,
                 Collections.singletonList("§8Last saved: " + lastSaved), DyeColor.WHITE.getData());
 
         return worldName.equals(this.player.getPlayer().getWorld().getName())
-                ? PagedGUI.createItemPlaceholder(Material.WOOL, codes + worldName, Collections.singletonList("§eActive"), DyeColor.LIME.getData())
-                : PagedGUI.createItemPlaceholder(Material.WOOL, codes + worldName,
+                ? GUIUtils.createItemPlaceholder(Material.WOOL, codes + worldName, Collections.singletonList("§eActive"), DyeColor.LIME.getData())
+                : GUIUtils.createItemPlaceholder(Material.WOOL, codes + worldName,
                 Collections.singletonList("§8Last saved: " + lastSaved), DyeColor.WHITE.getData());
     }
 

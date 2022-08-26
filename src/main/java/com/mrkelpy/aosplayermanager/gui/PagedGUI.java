@@ -1,5 +1,7 @@
 package com.mrkelpy.aosplayermanager.gui;
 
+import com.mrkelpy.aosplayermanager.AOSPlayerManager;
+import com.mrkelpy.aosplayermanager.util.GUIUtils;
 import jdk.nashorn.internal.objects.annotations.Getter;
 import jdk.nashorn.internal.objects.annotations.Setter;
 import org.bukkit.Bukkit;
@@ -13,10 +15,10 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.plugin.Plugin;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * This abstract class handles the pagination for any GUI that extends it.
@@ -38,6 +40,7 @@ public abstract class PagedGUI implements Listener {
         this(inventoryName, inventorySize);
         this.itemList = items;
         this.sendToPage(this.page);
+        this.registerListeners();
     }
 
     /**
@@ -49,6 +52,7 @@ public abstract class PagedGUI implements Listener {
         this.inventory = Bukkit.createInventory(null, inventorySize+9, inventoryName);
         this.storageSlots = inventorySize - 1;
         this.page = 1;
+        this.registerListeners();
     }
 
     /**
@@ -120,9 +124,12 @@ public abstract class PagedGUI implements Listener {
         // Ignores the sendToPage call if list of items doesn't account for this many pages.
         if (this.itemList.size() - 1 < firstItemIndex && !this.itemList.isEmpty()) return;
 
-        List<ItemStack> itemsForPage = this.itemList.stream()
-                .filter(item -> this.itemList.indexOf(item) >= firstItemIndex && this.itemList.indexOf(item) <= lastItemIndex)
-                .collect(Collectors.toList());
+        // Creates a list of items to display on the page, starting from the first item and ending at the last item indexes on the item list.
+        List<ItemStack> itemsForPage = new ArrayList<>();
+        for (int i = firstItemIndex; i <= lastItemIndex; i++) {
+            if (i - firstItemIndex >= this.storageSlots + 1 || this.itemList.size() <= i) break;
+            itemsForPage.add(this.itemList.get(i));
+        }
 
         this.page = !this.itemList.isEmpty() ? page : 1;
         this.setPageItems(itemsForPage);
@@ -130,10 +137,9 @@ public abstract class PagedGUI implements Listener {
     }
 
     /**
-     * This method is meant to be overrided by any class that extends PagedGUI, and meant
-     * to be used when the "go back" button is pressed, opening up the previous GUI.
+     * This method is called when the "Go Back" button is pressed.
      */
-    protected void goBack() {}
+    protected abstract void goBack();
 
     /**
      * @return The current page of the PagedGUI.
@@ -169,14 +175,14 @@ public abstract class PagedGUI implements Listener {
     @SuppressWarnings("deprecation")
     private void setPagingButtons() {
         this.inventory.setItem(this.storageSlots + 1,
-                createItemPlaceholder(Material.INK_SACK, "§bPrevious Page", null,
+                GUIUtils.createItemPlaceholder(Material.INK_SACK, "§bPrevious Page", null,
                         this.hasPreviousPage() ? DyeColor.PURPLE.getData() : DyeColor.SILVER.getData()));
 
         this.inventory.setItem(this.storageSlots + 5,
-                createItemPlaceholder(Material.INK_SACK, "§bGo Back", null, DyeColor.RED.getData()));
+                GUIUtils.createItemPlaceholder(Material.INK_SACK, "§bGo Back", null, DyeColor.RED.getData()));
 
         this.inventory.setItem(this.storageSlots + 9,
-                createItemPlaceholder(Material.INK_SACK, "§bNext Page", null,
+                GUIUtils.createItemPlaceholder(Material.INK_SACK, "§bNext Page", null,
                         this.hasNextPage() ? DyeColor.PURPLE.getData() : DyeColor.SILVER.getData()));
     }
 
@@ -194,36 +200,11 @@ public abstract class PagedGUI implements Listener {
     }
 
     /**
-     * Creates an item meant to be used as a placeholder for a button inside a GUI.
-     * @param itemType The item type of the item to be created.
-     * @param itemName The item's name
-     * @param itemLore (Optional) The item's lore.
-     * @param data (Optional) The item's extra data.
-     * @return The ItemStack with the custom item.
+     * Registers all event listeners used by an instance of this GUI.
      */
-    protected static ItemStack createItemPlaceholder(Material itemType, String itemName, List<String> itemLore, short data) {
-
-        // Creates the item and obtains its metadata
-        ItemStack placeholder = new ItemStack(itemType, 1, data);
-        ItemMeta itemMeta = placeholder.getItemMeta();
-
-        // Sets the custom data for the item
-        itemMeta.setDisplayName("§f" + itemName);
-        if (itemLore != null) itemMeta.setLore(itemLore);
-
-        // Saves the data and returns the item
-        placeholder.setItemMeta(itemMeta);
-        return placeholder;
-    }
-
-    /**
-     * Shortcut for {@link #createItemPlaceholder(Material, String, List, short)} with the lore and data set to null.
-     * @param itemType The item type of the item to be created.
-     * @param itemName The item's name
-     * @return The ItemStack with the custom item.
-     */
-    protected static ItemStack createItemPlaceholder(Material itemType, String itemName) {
-        return createItemPlaceholder(itemType, itemName, null, (short) 0);
+    private void registerListeners() {
+        Plugin plugin = Bukkit.getPluginManager().getPlugin(AOSPlayerManager.PLUGIN_NAME);
+        Bukkit.getPluginManager().registerEvents(this, plugin);
     }
 }
 
